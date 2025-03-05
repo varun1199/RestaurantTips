@@ -46,6 +46,7 @@ export default function TipEntry() {
   const queryClient = useQueryClient();
   const [tipDistributions, setTipDistributions] = useState<TipDistribution[]>([]);
   const [editingTip, setEditingTip] = useState<TipWithEmployees | null>(null);
+  const [editDistributions, setEditDistributions] = useState<TipDistribution[]>([]);
 
   // Fetch employees and tips
   const { data: employees = [] } = useQuery<Employee[]>({
@@ -99,6 +100,27 @@ export default function TipEntry() {
   useEffect(() => {
     updateDistributions();
   }, [totalAmount, selectedEmployees.length, employees]);
+
+  // Watch edit form values for distribution updates
+  const editSelectedEmployees = editForm.watch("employeeIds") || [];
+  const editAmount = Number(editForm.watch("amount")) || 0;
+
+  useEffect(() => {
+    if (editSelectedEmployees.length > 0 && editAmount > 0) {
+      const perEmployee = editAmount / editSelectedEmployees.length;
+      const distributions = editSelectedEmployees.map(empId => {
+        const employee = employees.find(e => e.id === empId);
+        return {
+          employeeId: empId,
+          employeeName: employee?.name || '',
+          amount: perEmployee
+        };
+      });
+      setEditDistributions(distributions);
+      editForm.setValue("distributions", distributions);
+      editForm.setValue("numEmployees", editSelectedEmployees.length);
+    }
+  }, [editSelectedEmployees, editAmount, employees, editForm]);
 
   const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy");
 
@@ -180,6 +202,7 @@ export default function TipEntry() {
         description: "Tip record updated successfully",
       });
       setEditingTip(null);
+      setEditDistributions([]);
     },
     onError: () => {
       toast({
@@ -192,8 +215,10 @@ export default function TipEntry() {
 
   const handleEdit = (tip: TipWithEmployees) => {
     setEditingTip(tip);
+    const tipDate = new Date(tip.date);
+
     editForm.reset({
-      date: format(new Date(tip.date), "yyyy-MM-dd"),
+      date: format(tipDate, "yyyy-MM-dd"),
       amount: Number(tip.amount),
       numEmployees: Number(tip.numEmployees),
       employeeIds: tip.employees.map(emp => emp.id),
@@ -203,6 +228,12 @@ export default function TipEntry() {
         amount: Number(emp.amount)
       }))
     });
+
+    setEditDistributions(tip.employees.map(emp => ({
+      employeeId: emp.id,
+      employeeName: emp.name,
+      amount: Number(emp.amount)
+    })));
   };
 
   return (
@@ -262,13 +293,13 @@ export default function TipEntry() {
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
                           <Checkbox
-                            checked={selectedEmployees.includes(employee.id)}
+                            checked={field.value?.includes(employee.id)}
                             onCheckedChange={(checked) => {
-                              const current = form.getValues("employeeIds");
+                              const current = field.value || [];
                               const updated = checked
                                 ? [...current, employee.id]
                                 : current.filter((id) => id !== employee.id);
-                              form.setValue("employeeIds", updated);
+                              field.onChange(updated);
                             }}
                           />
                         </FormControl>
@@ -390,6 +421,7 @@ export default function TipEntry() {
                         step="0.01"
                         min="0"
                         {...field}
+                        value={field.value}
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
@@ -410,25 +442,11 @@ export default function TipEntry() {
                           <Checkbox
                             checked={field.value?.includes(employee.id)}
                             onCheckedChange={(checked) => {
-                              const current = editForm.getValues("employeeIds");
+                              const current = field.value || [];
                               const updated = checked
                                 ? [...current, employee.id]
                                 : current.filter((id) => id !== employee.id);
-                              editForm.setValue("employeeIds", updated);
-
-                              // Update distributions when employees change
-                              const totalAmount = editForm.getValues("amount");
-                              const perEmployee = totalAmount / updated.length;
-                              const distributions = updated.map(empId => {
-                                const emp = employees.find(e => e.id === empId);
-                                return {
-                                  employeeId: empId,
-                                  employeeName: emp?.name || '',
-                                  amount: perEmployee
-                                };
-                              });
-                              editForm.setValue("distributions", distributions);
-                              editForm.setValue("numEmployees", updated.length);
+                              field.onChange(updated);
                             }}
                           />
                         </FormControl>
@@ -438,6 +456,28 @@ export default function TipEntry() {
                   />
                 ))}
               </div>
+
+              {editDistributions.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-2">Updated Distribution Preview</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {editDistributions.map((dist) => (
+                        <TableRow key={dist.employeeId}>
+                          <TableCell>{dist.employeeName}</TableCell>
+                          <TableCell className="text-right">${dist.amount.toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
 
               <Button
                 type="submit"
