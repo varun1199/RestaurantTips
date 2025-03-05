@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { exportTipsToCSV } from "@/lib/csv";
-import { format, subDays } from "date-fns";
+import { format, subDays, parseISO } from "date-fns";
 import type { Tip, Employee } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -23,7 +23,7 @@ const dateRangeSchema = z.object({
 });
 
 export default function Dashboard() {
-  const { data: tips, isLoading } = useQuery<TipWithEmployees[]>({
+  const { data: tips = [], isLoading } = useQuery<TipWithEmployees[]>({
     queryKey: ["/api/tips"],
   });
 
@@ -40,9 +40,9 @@ export default function Dashboard() {
   const handleExport = (values: z.infer<typeof dateRangeSchema>) => {
     if (!tips) return;
 
-    const startDate = new Date(values.startDate);
-    const endDate = new Date(values.endDate);
-    endDate.setHours(23, 59, 59, 999); // Include the entire end date
+    // Parse the dates and ensure proper handling of start and end times
+    const startDate = parseISO(values.startDate);
+    const endDate = parseISO(values.endDate);
 
     exportTipsToCSV(tips, startDate, endDate);
     setIsExportDialogOpen(false);

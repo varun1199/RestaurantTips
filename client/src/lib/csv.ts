@@ -1,21 +1,22 @@
 import { Tip, Employee } from "@shared/schema";
-import { format, isWithinInterval, endOfDay, parseISO } from "date-fns";
+import { format, isWithinInterval, endOfDay, startOfDay } from "date-fns";
 
 interface TipWithEmployees extends Tip {
   employees: (Employee & { amount: number })[];
 }
 
 function generateDailyReport(tips: TipWithEmployees[], startDate: Date, endDate: Date) {
-  // Set end date to end of day to include all records
-  const endOfEndDate = endOfDay(new Date(endDate));
+  // Set start date to start of day and end date to end of day to include all records
+  const startDateTime = startOfDay(startDate);
+  const endDateTime = endOfDay(endDate);
 
   // Filter tips within the date range
   const filteredTips = tips.filter(tip => {
     const tipDate = new Date(tip.date);
-    // Ensure we're comparing dates at the start of the day
+    // Compare with the full day range
     return isWithinInterval(tipDate, { 
-      start: new Date(startDate.setHours(0, 0, 0, 0)),
-      end: endOfEndDate 
+      start: startDateTime,
+      end: endDateTime
     });
   });
 
@@ -36,7 +37,7 @@ function generateDailyReport(tips: TipWithEmployees[], startDate: Date, endDate:
   sortedTips.forEach(tip => {
     tip.employees.forEach(emp => {
       const currentTotal = employeeTotals.get(emp.name) || 0;
-      employeeTotals.set(emp.name, currentTotal + emp.amount);
+      employeeTotals.set(emp.name, currentTotal + Number(emp.amount));
     });
   });
 
@@ -61,7 +62,7 @@ function generateDailyReport(tips: TipWithEmployees[], startDate: Date, endDate:
     // Add amount for each employee (or empty if they didn't work that day)
     employeeNames.forEach(empName => {
       const empTip = tip.employees.find(e => e.name === empName);
-      row.push(empTip ? empTip.amount.toFixed(2) : "");
+      row.push(empTip ? Number(empTip.amount).toFixed(2) : "");
     });
 
     // Add daily total
