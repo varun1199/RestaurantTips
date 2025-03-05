@@ -65,8 +65,9 @@ export const registrationSchema = insertUserSchema.extend({
 
 export const insertEmployeeSchema = createInsertSchema(employees);
 export const insertTipSchema = createInsertSchema(tips)
-  .omit({ id: true, date: true })
+  .omit({ id: true })
   .extend({
+    date: z.string(),
     amount: z.number().min(0, "Amount must be positive"),
     numEmployees: z.number().min(1, "Must have at least one employee"),
     employeeIds: z.array(z.number()).min(1, "Select at least one employee"),

@@ -54,6 +54,7 @@ export default function TipEntry() {
       amount: 0,
       numEmployees: 1,
       employeeIds: [],
+      date: format(new Date(), "yyyy-MM-dd"), // Default to today's date
     },
   });
 
@@ -66,6 +67,7 @@ export default function TipEntry() {
   }, [selectedEmployees, form]);
 
   const totalAmount = Number(form.watch("amount"));
+  const selectedDate = new Date(form.watch("date"));
   const perEmployeeAmount = selectedEmployees.length > 0 ? totalAmount / selectedEmployees.length : 0;
 
   // Update distributions when amount or selected employees change
@@ -101,8 +103,7 @@ export default function TipEntry() {
     setEditingEmployee(null);
   };
 
-  const currentDate = new Date();
-  const formattedDate = format(currentDate, "EEEE, MMMM d, yyyy");
+  const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy");
 
   const mutation = useMutation({
     mutationFn: (data: TipFormSchema) =>
@@ -143,7 +144,7 @@ export default function TipEntry() {
               </TableBody>
             </Table>
             <div className="mt-2 text-sm text-muted-foreground text-center">
-              Distribution recorded at {format(currentDate, "h:mm a")}
+              Distribution recorded at {format(new Date(), "h:mm a")}
             </div>
           </div>
         ),
@@ -174,6 +175,20 @@ export default function TipEntry() {
               onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
               className="space-y-4"
             >
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="amount"
