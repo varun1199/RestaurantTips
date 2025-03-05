@@ -28,6 +28,17 @@ import {
 import { Edit2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type TipFormSchema = z.infer<typeof insertTipSchema>;
 
@@ -47,6 +58,7 @@ export default function TipEntry() {
   const [tipDistributions, setTipDistributions] = useState<TipDistribution[]>([]);
   const [editingTip, setEditingTip] = useState<TipWithEmployees | null>(null);
   const [editDistributions, setEditDistributions] = useState<TipDistribution[]>([]);
+  const [tipToDelete, setTipToDelete] = useState<TipWithEmployees | null>(null);
 
   // Fetch employees and tips
   const { data: employees = [] } = useQuery<Employee[]>({
@@ -236,6 +248,27 @@ export default function TipEntry() {
     })));
   };
 
+  // Add delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (tipId: number) =>
+      apiRequest("DELETE", `/api/tips/${tipId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
+      toast({
+        title: "Success",
+        description: "Tip record deleted successfully",
+      });
+      setTipToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete tip record",
+        variant: "destructive",
+      });
+    },
+  });
+
   return (
     <div className="space-y-8">
       <Card>
@@ -369,6 +402,13 @@ export default function TipEntry() {
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTipToDelete(tip)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -490,6 +530,29 @@ export default function TipEntry() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={tipToDelete !== null} onOpenChange={(open) => !open && setTipToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the tip record from {tipToDelete && format(new Date(tipToDelete.date), "MMMM d, yyyy")}
+              {tipToDelete && ` with total amount $${Number(tipToDelete.amount).toFixed(2)}`}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => tipToDelete && deleteMutation.mutate(tipToDelete.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

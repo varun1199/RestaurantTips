@@ -162,6 +162,18 @@ export async function registerRoutes(app: Express) {
     res.json(tills);
   });
 
+  // New endpoint for deleting tips
+  app.delete("/api/tips/:id", requireAuth, async (req, res) => {
+    try {
+      const tipId = parseInt(req.params.id);
+      await storage.deleteTip(tipId);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error deleting tip:", error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to delete tip" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

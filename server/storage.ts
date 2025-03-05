@@ -18,6 +18,7 @@ export interface IStorage {
   getTipsByDate(date: Date): Promise<Tip[]>;
   getAllTips(): Promise<Tip[]>;
   getTipEmployees(tipId: number): Promise<(Employee & { amount: number })[]>;
+  deleteTip(id: number): Promise<void>;
 
   // Till operations
   createTill(till: InsertTill): Promise<Till>;
@@ -170,6 +171,15 @@ export class DatabaseStorage implements IStorage {
 
     return db.select().from(tills)
       .where(and(gte(tills.date, startOfDay), lte(tills.date, endOfDay)));
+  }
+
+  async deleteTip(id: number): Promise<void> {
+    return await db.transaction(async (tx) => {
+      // Delete tip-employee relationships first
+      await tx.delete(tipEmployees).where(eq(tipEmployees.tipId, id));
+      // Delete the tip
+      await tx.delete(tips).where(eq(tips.id, id));
+    });
   }
 }
 
