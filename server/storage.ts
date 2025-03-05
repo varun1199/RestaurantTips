@@ -24,7 +24,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Existing user methods remain unchanged
+  // User methods remain unchanged
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
@@ -40,7 +40,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Employee methods
+  // Employee methods remain unchanged
   async getAllEmployees(): Promise<Employee[]> {
     return db.select().from(employees);
   }
@@ -49,9 +49,9 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(employees).where(eq(employees.isActive, true));
   }
 
-  // Updated tip methods with individual amounts
+  // Updated tip methods
   async createTip(insertTip: InsertTip): Promise<Tip> {
-    const { distributions, ...tipData } = insertTip;
+    const { distributions, employeeIds, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
       // Insert the tip
@@ -62,7 +62,7 @@ export class DatabaseStorage implements IStorage {
         submittedById: tipData.submittedById
       }).returning();
 
-      // Create tip-employee relationships with individual amounts
+      // Create tip-employee relationships
       await Promise.all(
         distributions.map(dist =>
           tx.insert(tipEmployees).values({
@@ -92,16 +92,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTipEmployees(tipId: number): Promise<(Employee & { amount: number })[]> {
-    const result = await db
+    const results = await db
       .select({
-        ...employees,
-        amount: tipEmployees.amount
+        id: employees.id,
+        name: employees.name,
+        isActive: employees.isActive,
+        amount: tipEmployees.amount,
       })
       .from(tipEmployees)
       .innerJoin(employees, eq(tipEmployees.employeeId, employees.id))
       .where(eq(tipEmployees.tipId, tipId));
 
-    return result;
+    return results.map(r => ({
+      ...r,
+      amount: Number(r.amount)
+    }));
   }
 
   // Till methods remain unchanged
@@ -121,17 +126,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-// Create default admin user on startup
-async function initializeDatabase() {
-  const adminUser = await storage.getUserByUsername("admin");
-  if (!adminUser) {
-    await storage.createUser({
-      username: "admin",
-      password: "admin123", // In production, this should be hashed
-      isAdmin: true
-    });
-  }
-}
-
 export const storage = new DatabaseStorage();
-initializeDatabase().catch(console.error);

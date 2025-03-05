@@ -87,23 +87,35 @@ export async function registerRoutes(app: Express) {
 
   // Tips routes
   app.post("/api/tips", requireAuth, async (req, res) => {
-    const tipData = insertTipSchema.parse(req.body);
-    const tip = await storage.createTip({
-      ...tipData,
-      submittedById: req.session.userId!
-    });
-    res.json(tip);
+    try {
+      console.log("Received tip data:", req.body);
+      const tipData = insertTipSchema.parse(req.body);
+      const tip = await storage.createTip({
+        ...tipData,
+        submittedById: req.session.userId!
+      });
+      console.log("Created tip:", tip);
+      res.json(tip);
+    } catch (error) {
+      console.error("Error creating tip:", error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create tip" });
+    }
   });
 
-  app.get("/api/tips", requireAuth, async (req, res) => {
-    const tips = await storage.getAllTips();
-    const tipsWithEmployees = await Promise.all(
-      tips.map(async (tip) => ({
-        ...tip,
-        employees: await storage.getTipEmployees(tip.id)
-      }))
-    );
-    res.json(tipsWithEmployees);
+  app.get("/api/tips", requireAuth, async (_req, res) => {
+    try {
+      const tips = await storage.getAllTips();
+      const tipsWithEmployees = await Promise.all(
+        tips.map(async (tip) => ({
+          ...tip,
+          employees: await storage.getTipEmployees(tip.id)
+        }))
+      );
+      res.json(tipsWithEmployees);
+    } catch (error) {
+      console.error("Error fetching tips:", error);
+      res.status(500).json({ message: "Failed to fetch tips" });
+    }
   });
 
   // Till routes
