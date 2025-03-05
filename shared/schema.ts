@@ -2,7 +2,7 @@ import { pgTable, text, serial, timestamp, numeric, boolean } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// User model remains unchanged
+// User model
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -35,7 +35,7 @@ export const tipEmployees = pgTable("tip_employees", {
   employeeId: serial("employee_id").references(() => employees.id),
 });
 
-// Till model remains unchanged
+// Till model 
 export const tills = pgTable("tills", {
   id: serial("id").primaryKey(),
   date: timestamp("date").notNull().defaultNow(),
@@ -67,6 +67,8 @@ export const insertEmployeeSchema = createInsertSchema(employees);
 export const insertTipSchema = createInsertSchema(tips)
   .omit({ id: true, date: true })
   .extend({
+    amount: z.number().min(0, "Amount must be positive"),
+    numEmployees: z.number().min(1, "Must have at least one employee"),
     employeeIds: z.array(z.number()).min(1, "Select at least one employee"),
   });
 export const insertTillSchema = createInsertSchema(tills).omit({ id: true, date: true });

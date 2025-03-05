@@ -11,13 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertTipSchema, type Employee } from "@shared/schema";
 
-const tipFormSchema = insertTipSchema.extend({
-  amount: z.string().min(1).transform(Number),
-  numEmployees: z.string().min(1).transform(Number),
-  employeeIds: z.array(z.number()).min(1, "Select at least one employee"),
-});
-
-type TipFormSchema = z.infer<typeof tipFormSchema>;
+type TipFormSchema = z.infer<typeof insertTipSchema>;
 
 export default function TipEntry() {
   const { toast } = useToast();
@@ -29,18 +23,18 @@ export default function TipEntry() {
   });
 
   const form = useForm<TipFormSchema>({
-    resolver: zodResolver(tipFormSchema),
+    resolver: zodResolver(insertTipSchema),
     defaultValues: {
-      amount: "0",
-      numEmployees: "1",
+      amount: 0,
+      numEmployees: 1,
       employeeIds: [],
     },
   });
 
   // Watch employee selections to update numEmployees
   const selectedEmployees = form.watch("employeeIds");
-  if (selectedEmployees.length !== Number(form.getValues("numEmployees"))) {
-    form.setValue("numEmployees", String(selectedEmployees.length));
+  if (selectedEmployees.length !== form.getValues("numEmployees")) {
+    form.setValue("numEmployees", selectedEmployees.length);
   }
 
   const mutation = useMutation({
@@ -82,7 +76,13 @@ export default function TipEntry() {
                   <FormItem>
                     <FormLabel>Total Tips ($)</FormLabel>
                     <FormControl>
-                      <Input {...field} type="number" step="0.01" min="0" />
+                      <Input 
+                        {...field} 
+                        type="number" 
+                        step="0.01" 
+                        min="0"
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
