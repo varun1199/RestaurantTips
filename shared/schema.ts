@@ -12,7 +12,7 @@ export const users = pgTable("users", {
   email: text("email"),
 });
 
-// Employee model
+// New Employee model
 export const employees = pgTable("employees", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -28,12 +28,11 @@ export const tips = pgTable("tips", {
   submittedById: serial("submitted_by_id").references(() => users.id),
 });
 
-// Junction table for tips and employees with individual amounts
+// Junction table for tips and employees
 export const tipEmployees = pgTable("tip_employees", {
   id: serial("id").primaryKey(),
   tipId: serial("tip_id").references(() => tips.id),
   employeeId: serial("employee_id").references(() => employees.id),
-  amount: numeric("amount").notNull(), // Individual tip amount
 });
 
 // Till model 
@@ -65,24 +64,13 @@ export const registrationSchema = insertUserSchema.extend({
 });
 
 export const insertEmployeeSchema = createInsertSchema(employees);
-
-// Extended tip schema with employee amounts
 export const insertTipSchema = createInsertSchema(tips)
   .omit({ id: true, date: true })
   .extend({
     amount: z.number().min(0, "Amount must be positive"),
     numEmployees: z.number().min(1, "Must have at least one employee"),
     employeeIds: z.array(z.number()).min(1, "Select at least one employee"),
-    employeeAmounts: z.array(z.number()).optional(), // Optional for initial creation
   });
-
-export const updateTipDistributionSchema = z.object({
-  employeeAmounts: z.array(z.object({
-    employeeId: z.number(),
-    amount: z.number().min(0),
-  })),
-});
-
 export const insertTillSchema = createInsertSchema(tills).omit({ id: true, date: true });
 
 // Types
@@ -95,4 +83,3 @@ export type InsertTip = z.infer<typeof insertTipSchema>;
 export type Till = typeof tills.$inferSelect;
 export type InsertTill = z.infer<typeof insertTillSchema>;
 export type TipEmployee = typeof tipEmployees.$inferSelect;
-export type UpdateTipDistribution = z.infer<typeof updateTipDistributionSchema>;

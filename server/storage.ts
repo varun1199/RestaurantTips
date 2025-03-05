@@ -1,4 +1,4 @@
-import { users, tips, tills, employees, tipEmployees, type User, type InsertUser, type Tip, type InsertTip, type Till, type InsertTill, type Employee, type UpdateTipDistribution } from "@shared/schema";
+import { users, tips, tills, employees, tipEmployees, type User, type InsertUser, type Tip, type InsertTip, type Till, type InsertTill, type Employee } from "@shared/schema";
 import { db } from "./db";
 import { eq, gte, lte, and } from "drizzle-orm";
 
@@ -16,8 +16,7 @@ export interface IStorage {
   createTip(tip: InsertTip & { employeeIds: number[] }): Promise<Tip>;
   getTipsByDate(date: Date): Promise<Tip[]>;
   getAllTips(): Promise<Tip[]>;
-  getTipEmployees(tipId: number): Promise<{ employee: Employee; amount: string }[]>;
-  updateTipDistribution(tipId: number, distribution: UpdateTipDistribution): Promise<void>;
+  getTipEmployees(tipId: number): Promise<Employee[]>;
 
   // Till operations
   createTill(till: InsertTill): Promise<Till>;
@@ -41,7 +40,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Employee methods
+  // New employee methods
   async getAllEmployees(): Promise<Employee[]> {
     return db.select().from(employees);
   }
@@ -52,21 +51,19 @@ export class DatabaseStorage implements IStorage {
 
   // Updated tip methods
   async createTip(insertTip: InsertTip & { employeeIds: number[] }): Promise<Tip> {
-    const { employeeIds, employeeAmounts, ...tipData } = insertTip;
-    const defaultAmount = Number(tipData.amount) / employeeIds.length;
+    const { employeeIds, ...tipData } = insertTip;
 
     // Start a transaction
     return await db.transaction(async (tx) => {
       // Create the tip
       const [tip] = await tx.insert(tips).values(tipData).returning();
 
-      // Create tip-employee relationships with equal distribution
+      // Create tip-employee relationships
       await Promise.all(
-        employeeIds.map((employeeId, index) =>
+        employeeIds.map(employeeId =>
           tx.insert(tipEmployees).values({
             tipId: tip.id,
             employeeId,
-            amount: employeeAmounts?.[index] || defaultAmount,
           })
         )
       );
@@ -89,39 +86,16 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(tips);
   }
 
-  async getTipEmployees(tipId: number): Promise<{ employee: Employee; amount: string }[]> {
+  async getTipEmployees(tipId: number): Promise<Employee[]> {
     const result = await db
       .select({
-        employee: employees,
-        amount: tipEmployees.amount,
+        employee: employees
       })
       .from(tipEmployees)
       .innerJoin(employees, eq(tipEmployees.employeeId, employees.id))
       .where(eq(tipEmployees.tipId, tipId));
 
-    return result.map(r => ({
-      employee: r.employee,
-      amount: r.amount,
-    }));
-  }
-
-  async updateTipDistribution(tipId: number, distribution: UpdateTipDistribution): Promise<void> {
-    await db.transaction(async (tx) => {
-      // Update each employee's tip amount
-      await Promise.all(
-        distribution.employeeAmounts.map(({ employeeId, amount }) =>
-          tx
-            .update(tipEmployees)
-            .set({ amount: amount.toString() }) 
-            .where(
-              and(
-                eq(tipEmployees.tipId, tipId),
-                eq(tipEmployees.employeeId, employeeId)
-              )
-            )
-        )
-      );
-    });
+    return result.map(r => r.employee);
   }
 
   // Till methods remain unchanged
