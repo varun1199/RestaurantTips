@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Edit2, CheckCircle } from "lucide-react";
 import { useState, useEffect, ReactNode } from "react";
+import { CheckCircle2 } from "lucide-react";
 
 type TipFormSchema = z.infer<typeof insertTipSchema>;
 
@@ -117,8 +118,8 @@ export default function TipEntry() {
       toast({
         title: (
           <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span>Tips Recorded Successfully</span>
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <span>Tips Successfully Recorded!</span>
           </div>
         ),
         description: (
@@ -156,8 +157,12 @@ export default function TipEntry() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to record tips",
+        title: (
+          <div className="flex items-center gap-2 text-destructive">
+            <span>Error Recording Tips</span>
+          </div>
+        ),
+        description: "Failed to record tips. Please try again.",
         variant: "destructive",
       });
     },
