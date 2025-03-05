@@ -54,9 +54,9 @@ export class DatabaseStorage implements IStorage {
     const { distributions, employeeIds, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
-      // Insert the tip
+      // Insert the tip with exact date from form
       const [tip] = await tx.insert(tips).values({
-        date: new Date(tipData.date),
+        date: tipData.date, // Use the date directly from the form
         amount: tipData.amount.toString(),
         numEmployees: tipData.numEmployees.toString(),
         submittedById: tipData.submittedById
