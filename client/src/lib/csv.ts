@@ -1,11 +1,18 @@
 import { Tip, Employee } from "@shared/schema";
-import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { format, isWithinInterval, endOfDay } from "date-fns";
+
+interface TipWithEmployees extends Tip {
+  employees: (Employee & { amount: number })[];
+}
 
 function generateDailyReport(tips: TipWithEmployees[], startDate: Date, endDate: Date) {
+  // Set end date to end of day to include all records
+  const endOfEndDate = endOfDay(endDate);
+
   // Filter tips within the date range
   const filteredTips = tips.filter(tip => {
     const tipDate = new Date(tip.date);
-    return isWithinInterval(tipDate, { start: startDate, end: endDate });
+    return isWithinInterval(tipDate, { start: startDate, end: endOfEndDate });
   });
 
   // Sort tips by date
