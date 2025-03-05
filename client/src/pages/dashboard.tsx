@@ -63,49 +63,47 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Export Dialog */}
-      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Select Date Range for Export</DialogTitle>
-          </DialogHeader>
-          <Form {...exportForm}>
-            <form onSubmit={exportForm.handleSubmit(handleExport)} className="space-y-4">
-              <FormField
-                control={exportForm.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={exportForm.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full">Export</Button>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <DialogTrigger asChild onClick={() => setIsExportDialogOpen(true)}>
-          <Button>Export to CSV</Button>
-        </DialogTrigger>
+        <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Export to CSV</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Select Date Range for Export</DialogTitle>
+            </DialogHeader>
+            <Form {...exportForm}>
+              <form onSubmit={exportForm.handleSubmit(handleExport)} className="space-y-4">
+                <FormField
+                  control={exportForm.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={exportForm.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">Export</Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
