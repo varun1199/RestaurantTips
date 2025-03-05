@@ -112,7 +112,7 @@ export class DatabaseStorage implements IStorage {
         distribution.employeeAmounts.map(({ employeeId, amount }) =>
           tx
             .update(tipEmployees)
-            .set({ amount })
+            .set({ amount: amount.toString() }) 
             .where(
               and(
                 eq(tipEmployees.tipId, tipId),

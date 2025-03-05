@@ -64,10 +64,23 @@ export default function Dashboard() {
   const handleSaveDistribution = () => {
     if (!selectedTip) return;
 
+    // Validate that the total matches the original tip amount
+    const totalEdited = Object.values(editedAmounts).reduce((sum, amount) => sum + amount, 0);
+    const originalTotal = Number(selectedTip.amount);
+
+    if (Math.abs(totalEdited - originalTotal) > 0.01) { // Allow for small rounding differences
+      toast({
+        title: "Error",
+        description: "The total amount must match the original tip amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const distribution: UpdateTipDistribution = {
       employeeAmounts: Object.entries(editedAmounts).map(([employeeId, amount]) => ({
         employeeId: Number(employeeId),
-        amount,
+        amount: Number(amount),
       })),
     };
 
