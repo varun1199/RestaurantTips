@@ -10,21 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertTillSchema } from "@shared/schema";
 
-const tillFormSchema = insertTillSchema.extend({
-  pennies: z.string().transform(Number),
-  nickels: z.string().transform(Number),
-  dimes: z.string().transform(Number),
-  quarters: z.string().transform(Number),
-  ones: z.string().transform(Number),
-  fives: z.string().transform(Number),
-  tens: z.string().transform(Number),
-  twenties: z.string().transform(Number),
-  fifties: z.string().transform(Number),
-  hundreds: z.string().transform(Number),
-});
-
 const denominations = {
-  pennies: 0.01,
   nickels: 0.05,
   dimes: 0.10,
   quarters: 0.25,
@@ -39,8 +25,8 @@ const denominations = {
 export default function TillCalculator() {
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof tillFormSchema>>({
-    resolver: zodResolver(tillFormSchema),
+  const form = useForm<z.infer<typeof insertTillSchema>>({
+    resolver: zodResolver(insertTillSchema),
     defaultValues: Object.fromEntries(
       Object.keys(denominations).map(key => [key, "0"])
     ),
@@ -51,7 +37,7 @@ export default function TillCalculator() {
   }, 0);
 
   const mutation = useMutation({
-    mutationFn: (data: z.infer<typeof tillFormSchema>) =>
+    mutationFn: (data: z.infer<typeof insertTillSchema>) =>
       apiRequest("POST", "/api/tills", { ...data, total }),
     onSuccess: () => {
       toast({

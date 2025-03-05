@@ -40,7 +40,6 @@ export const tipEmployees = pgTable("tip_employees", {
 export const tills = pgTable("tills", {
   id: serial("id").primaryKey(),
   date: timestamp("date").notNull().defaultNow(),
-  pennies: numeric("pennies").notNull(),
   nickels: numeric("nickels").notNull(),
   dimes: numeric("dimes").notNull(),
   quarters: numeric("quarters").notNull(),
