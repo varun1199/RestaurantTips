@@ -13,7 +13,7 @@ export interface IStorage {
   getActiveEmployees(): Promise<Employee[]>;
 
   // Tip operations
-  createTip(tip: InsertTip & { distributions: Array<{ employeeId: number, amount: number }> }): Promise<Tip>;
+  createTip(tip: InsertTip): Promise<Tip>;
   getTipsByDate(date: Date): Promise<Tip[]>;
   getAllTips(): Promise<Tip[]>;
   getTipEmployees(tipId: number): Promise<(Employee & { amount: number })[]>;
@@ -50,12 +50,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Updated tip methods with individual amounts
-  async createTip(insertTip: InsertTip & { distributions: Array<{ employeeId: number, amount: number }> }): Promise<Tip> {
+  async createTip(insertTip: InsertTip): Promise<Tip> {
     const { distributions, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
-      // Create the tip
-      const [tip] = await tx.insert(tips).values(tipData).returning();
+      // Insert the tip
+      const [tip] = await tx.insert(tips).values({
+        date: new Date(tipData.date),
+        amount: tipData.amount.toString(),
+        numEmployees: tipData.numEmployees.toString(),
+        submittedById: tipData.submittedById
+      }).returning();
 
       // Create tip-employee relationships with individual amounts
       await Promise.all(
@@ -63,7 +68,7 @@ export class DatabaseStorage implements IStorage {
           tx.insert(tipEmployees).values({
             tipId: tip.id,
             employeeId: dist.employeeId,
-            amount: dist.amount
+            amount: dist.amount.toString()
           })
         )
       );
