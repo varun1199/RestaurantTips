@@ -10,12 +10,37 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertTipSchema, type Employee } from "@shared/schema";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Edit2 } from "lucide-react";
+import { useState, useEffect, ReactNode } from "react";
 
 type TipFormSchema = z.infer<typeof insertTipSchema>;
+
+interface TipDistribution {
+  employeeId: number;
+  employeeName: string;
+  amount: number;
+}
 
 export default function TipEntry() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [tipDistributions, setTipDistributions] = useState<TipDistribution[]>([]);
+  const [editingEmployee, setEditingEmployee] = useState<TipDistribution | null>(null);
 
   // Fetch employees
   const { data: employees = [] } = useQuery<Employee[]>({
@@ -33,35 +58,83 @@ export default function TipEntry() {
 
   // Watch employee selections to update numEmployees
   const selectedEmployees = form.watch("employeeIds");
-  if (selectedEmployees.length !== form.getValues("numEmployees")) {
-    form.setValue("numEmployees", selectedEmployees.length);
-  }
+  useEffect(() => {
+    if (selectedEmployees.length !== form.getValues("numEmployees")) {
+      form.setValue("numEmployees", selectedEmployees.length);
+    }
+  }, [selectedEmployees, form]);
 
-  const perEmployeeAmount = Number(form.watch("amount")) / selectedEmployees.length;
+  const totalAmount = Number(form.watch("amount"));
+  const perEmployeeAmount = selectedEmployees.length > 0 ? totalAmount / selectedEmployees.length : 0;
+
+  // Update distributions when amount or selected employees change
+  const updateDistributions = () => {
+    const distributions = selectedEmployees.map(empId => {
+      const employee = employees.find(e => e.id === empId);
+      return {
+        employeeId: empId,
+        employeeName: employee?.name || '',
+        amount: perEmployeeAmount
+      };
+    });
+    setTipDistributions(distributions);
+  };
+
+  useEffect(() => {
+    updateDistributions();
+  }, [totalAmount, selectedEmployees.length, employees]);
+
+  const handleEditAmount = (distribution: TipDistribution) => {
+    setEditingEmployee(distribution);
+  };
+
+  const handleSaveEdit = (newAmount: number) => {
+    if (!editingEmployee) return;
+
+    const newDistributions = tipDistributions.map(dist =>
+      dist.employeeId === editingEmployee.employeeId
+        ? { ...dist, amount: newAmount }
+        : dist
+    );
+    setTipDistributions(newDistributions);
+    setEditingEmployee(null);
+  };
 
   const mutation = useMutation({
     mutationFn: (data: TipFormSchema) =>
-      apiRequest("POST", "/api/tips", data),
+      apiRequest("POST", "/api/tips", {
+        ...data,
+        distributions: tipDistributions
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
-
-      // Show distribution details in success message
-      const selectedEmployeeNames = employees
-        .filter(emp => selectedEmployees.includes(emp.id))
-        .map(emp => emp.name);
 
       toast({
         title: "Tips Recorded Successfully",
         description: (
-          <div className="mt-2 space-y-2">
-            <p>Total Amount: ${Number(form.getValues("amount")).toFixed(2)}</p>
-            <p>Amount per Employee: ${perEmployeeAmount.toFixed(2)}</p>
-            <p className="text-sm">Distribution for: {selectedEmployeeNames.join(", ")}</p>
+          <div className="mt-2">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tipDistributions.map((dist) => (
+                  <TableRow key={dist.employeeId}>
+                    <TableCell>{dist.employeeName}</TableCell>
+                    <TableCell className="text-right">${dist.amount.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ),
       });
 
       form.reset();
+      setTipDistributions([]);
     },
     onError: () => {
       toast({
@@ -73,7 +146,7 @@ export default function TipEntry() {
   });
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle>Record Daily Tips</CardTitle>
@@ -133,14 +206,60 @@ export default function TipEntry() {
                 <FormMessage>{form.formState.errors.employeeIds?.message}</FormMessage>
               </div>
 
-              <div className="text-sm text-muted-foreground text-center">
-                {selectedEmployees.length} employees selected
-                {selectedEmployees.length > 0 && (
-                  <div className="mt-1">
-                    Tips per employee: ${perEmployeeAmount.toFixed(2)}
-                  </div>
-                )}
-              </div>
+              {tipDistributions.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-2">Tip Distribution</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Employee</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tipDistributions.map((dist) => (
+                        <TableRow key={dist.employeeId}>
+                          <TableCell>{dist.employeeName}</TableCell>
+                          <TableCell className="text-right">${dist.amount.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEditAmount(dist)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Edit Tip Amount for {dist.employeeName}</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4">
+                                  <FormItem>
+                                    <FormLabel>Amount ($)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        defaultValue={dist.amount}
+                                        onChange={(e) => handleSaveEdit(Number(e.target.value))}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
 
               <Button
                 type="submit"

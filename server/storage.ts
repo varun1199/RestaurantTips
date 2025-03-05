@@ -13,10 +13,10 @@ export interface IStorage {
   getActiveEmployees(): Promise<Employee[]>;
 
   // Tip operations
-  createTip(tip: InsertTip & { employeeIds: number[] }): Promise<Tip>;
+  createTip(tip: InsertTip & { distributions: Array<{ employeeId: number, amount: number }> }): Promise<Tip>;
   getTipsByDate(date: Date): Promise<Tip[]>;
   getAllTips(): Promise<Tip[]>;
-  getTipEmployees(tipId: number): Promise<Employee[]>;
+  getTipEmployees(tipId: number): Promise<(Employee & { amount: number })[]>;
 
   // Till operations
   createTill(till: InsertTill): Promise<Till>;
@@ -40,7 +40,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // New employee methods
+  // Employee methods
   async getAllEmployees(): Promise<Employee[]> {
     return db.select().from(employees);
   }
@@ -49,21 +49,21 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(employees).where(eq(employees.isActive, true));
   }
 
-  // Updated tip methods
-  async createTip(insertTip: InsertTip & { employeeIds: number[] }): Promise<Tip> {
-    const { employeeIds, ...tipData } = insertTip;
+  // Updated tip methods with individual amounts
+  async createTip(insertTip: InsertTip & { distributions: Array<{ employeeId: number, amount: number }> }): Promise<Tip> {
+    const { distributions, ...tipData } = insertTip;
 
-    // Start a transaction
     return await db.transaction(async (tx) => {
       // Create the tip
       const [tip] = await tx.insert(tips).values(tipData).returning();
 
-      // Create tip-employee relationships
+      // Create tip-employee relationships with individual amounts
       await Promise.all(
-        employeeIds.map(employeeId =>
+        distributions.map(dist =>
           tx.insert(tipEmployees).values({
             tipId: tip.id,
-            employeeId,
+            employeeId: dist.employeeId,
+            amount: dist.amount
           })
         )
       );
@@ -86,16 +86,17 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(tips);
   }
 
-  async getTipEmployees(tipId: number): Promise<Employee[]> {
+  async getTipEmployees(tipId: number): Promise<(Employee & { amount: number })[]> {
     const result = await db
       .select({
-        employee: employees
+        ...employees,
+        amount: tipEmployees.amount
       })
       .from(tipEmployees)
       .innerJoin(employees, eq(tipEmployees.employeeId, employees.id))
       .where(eq(tipEmployees.tipId, tipId));
 
-    return result.map(r => r.employee);
+    return result;
   }
 
   // Till methods remain unchanged

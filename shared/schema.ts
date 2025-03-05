@@ -28,11 +28,12 @@ export const tips = pgTable("tips", {
   submittedById: serial("submitted_by_id").references(() => users.id),
 });
 
-// Junction table for tips and employees
+// Junction table for tips and employees with individual amounts
 export const tipEmployees = pgTable("tip_employees", {
   id: serial("id").primaryKey(),
   tipId: serial("tip_id").references(() => tips.id),
   employeeId: serial("employee_id").references(() => employees.id),
+  amount: numeric("amount").notNull(), // Individual tip amount for this employee
 });
 
 // Till model 
@@ -70,6 +71,11 @@ export const insertTipSchema = createInsertSchema(tips)
     amount: z.number().min(0, "Amount must be positive"),
     numEmployees: z.number().min(1, "Must have at least one employee"),
     employeeIds: z.array(z.number()).min(1, "Select at least one employee"),
+    distributions: z.array(z.object({
+      employeeId: z.number(),
+      employeeName: z.string(),
+      amount: z.number()
+    }))
   });
 export const insertTillSchema = createInsertSchema(tills).omit({ id: true, date: true });
 
