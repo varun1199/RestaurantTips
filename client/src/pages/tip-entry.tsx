@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -69,7 +69,7 @@ export default function TipEntry() {
   }, [selectedEmployees, form]);
 
   const totalAmount = Number(form.watch("amount"));
-  const selectedDate = new Date(form.watch("date"));
+  const selectedDate = parseISO(form.watch("date"));
   const perEmployeeAmount = selectedEmployees.length > 0 ? totalAmount / selectedEmployees.length : 0;
 
   // Update distributions when amount or selected employees change
