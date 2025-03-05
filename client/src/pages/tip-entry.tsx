@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertTipSchema, type Employee } from "@shared/schema";
+import { insertTipSchema, type Employee, type Tip } from "@shared/schema";
 import {
   Table,
   TableBody,
@@ -24,10 +24,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Edit2, CheckCircle } from "lucide-react";
-import { useState, useEffect, ReactNode } from "react";
+import { Edit2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
 
 type TipFormSchema = z.infer<typeof insertTipSchema>;
@@ -38,15 +37,23 @@ interface TipDistribution {
   amount: number;
 }
 
+interface TipWithEmployees extends Tip {
+  employees: (Employee & { amount: number })[];
+}
+
 export default function TipEntry() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tipDistributions, setTipDistributions] = useState<TipDistribution[]>([]);
-  const [editingEmployee, setEditingEmployee] = useState<TipDistribution | null>(null);
+  const [editingTip, setEditingTip] = useState<TipWithEmployees | null>(null);
 
-  // Fetch employees
+  // Fetch employees and tips
   const { data: employees = [] } = useQuery<Employee[]>({
     queryKey: ["/api/employees"],
+  });
+
+  const { data: tips = [] } = useQuery<TipWithEmployees[]>({
+    queryKey: ["/api/tips"],
   });
 
   const form = useForm<TipFormSchema>({
@@ -56,8 +63,12 @@ export default function TipEntry() {
       numEmployees: 1,
       employeeIds: [],
       date: format(new Date(), "yyyy-MM-dd"),
-      distributions: [], // Initialize distributions
+      distributions: [],
     },
+  });
+
+  const editForm = useForm<TipFormSchema>({
+    resolver: zodResolver(insertTipSchema),
   });
 
   // Watch employee selections to update numEmployees
@@ -89,30 +100,12 @@ export default function TipEntry() {
     updateDistributions();
   }, [totalAmount, selectedEmployees.length, employees]);
 
-  const handleEditAmount = (distribution: TipDistribution) => {
-    setEditingEmployee(distribution);
-  };
-
-  const handleSaveEdit = (newAmount: number) => {
-    if (!editingEmployee) return;
-
-    const newDistributions = tipDistributions.map(dist =>
-      dist.employeeId === editingEmployee.employeeId
-        ? { ...dist, amount: newAmount }
-        : dist
-    );
-    setTipDistributions(newDistributions);
-    setEditingEmployee(null);
-  };
-
   const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy");
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (data: TipFormSchema) => {
-      // Ensure proper formatting of the data
       const formattedData = {
         ...data,
-        // Send the date without time component to avoid timezone issues
         date: data.date,
         distributions: tipDistributions.map(dist => ({
           employeeId: dist.employeeId,
@@ -120,13 +113,10 @@ export default function TipEntry() {
           amount: Number(dist.amount)
         }))
       };
-      console.log("Submitting tip data:", formattedData);
       return apiRequest("POST", "/api/tips", formattedData);
     },
     onSuccess: () => {
-      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
-
       toast({
         title: (
           <div className="flex items-center gap-2">
@@ -180,8 +170,43 @@ export default function TipEntry() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: { id: number; tip: TipFormSchema }) =>
+      apiRequest("PATCH", `/api/tips/${data.id}`, data.tip),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
+      toast({
+        title: "Success",
+        description: "Tip record updated successfully",
+      });
+      setEditingTip(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update tip record",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEdit = (tip: TipWithEmployees) => {
+    setEditingTip(tip);
+    editForm.reset({
+      date: format(new Date(tip.date), "yyyy-MM-dd"),
+      amount: Number(tip.amount),
+      numEmployees: Number(tip.numEmployees),
+      employeeIds: tip.employees.map(emp => emp.id),
+      distributions: tip.employees.map(emp => ({
+        employeeId: emp.id,
+        employeeName: emp.name,
+        amount: Number(emp.amount)
+      }))
+    });
+  };
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="space-y-8">
       <Card>
         <CardHeader>
           <CardTitle>Record Daily Tips - {formattedDate}</CardTitle>
@@ -189,7 +214,7 @@ export default function TipEntry() {
         <CardContent>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
+              onSubmit={form.handleSubmit((data) => createMutation.mutate(data))}
               className="space-y-4"
             >
               <FormField
@@ -263,7 +288,6 @@ export default function TipEntry() {
                       <TableRow>
                         <TableHead>Employee</TableHead>
                         <TableHead className="text-right">Amount</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -271,38 +295,6 @@ export default function TipEntry() {
                         <TableRow key={dist.employeeId}>
                           <TableCell>{dist.employeeName}</TableCell>
                           <TableCell className="text-right">${dist.amount.toFixed(2)}</TableCell>
-                          <TableCell>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditAmount(dist)}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Edit Tip Amount for {dist.employeeName}</DialogTitle>
-                                </DialogHeader>
-                                <div className="py-4">
-                                  <FormItem>
-                                    <FormLabel>Amount ($)</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        defaultValue={dist.amount}
-                                        onChange={(e) => handleSaveEdit(Number(e.target.value))}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -313,14 +305,151 @@ export default function TipEntry() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={mutation.isPending}
+                disabled={createMutation.isPending}
               >
-                {mutation.isPending ? "Recording..." : "Record Tips"}
+                {createMutation.isPending ? "Recording..." : "Record Tips"}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
+
+      {/* Previous Tips Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Previous Tips</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {tips.map((tip) => (
+              <div key={tip.id} className="border-b pb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium">
+                    {format(new Date(tip.date), "EEEE, MMMM d, yyyy")}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">
+                      Total: ${Number(tip.amount).toFixed(2)}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(tip)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <div>Per Employee: ${(Number(tip.amount) / tip.employees.length).toFixed(2)}</div>
+                  <div className="mt-1">
+                    Employees: {tip.employees.map(emp => emp.name).join(", ")}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editingTip !== null} onOpenChange={(open) => !open && setEditingTip(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Tip Record</DialogTitle>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form
+              onSubmit={editForm.handleSubmit((data) =>
+                editingTip && updateMutation.mutate({ id: editingTip.id, tip: data })
+              )}
+              className="space-y-4"
+            >
+              <FormField
+                control={editForm.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={editForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Tips ($)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <FormLabel>Select Working Employees</FormLabel>
+                {employees.map((employee) => (
+                  <FormField
+                    key={employee.id}
+                    control={editForm.control}
+                    name="employeeIds"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value?.includes(employee.id)}
+                            onCheckedChange={(checked) => {
+                              const current = editForm.getValues("employeeIds");
+                              const updated = checked
+                                ? [...current, employee.id]
+                                : current.filter((id) => id !== employee.id);
+                              editForm.setValue("employeeIds", updated);
+
+                              // Update distributions when employees change
+                              const totalAmount = editForm.getValues("amount");
+                              const perEmployee = totalAmount / updated.length;
+                              const distributions = updated.map(empId => {
+                                const emp = employees.find(e => e.id === empId);
+                                return {
+                                  employeeId: empId,
+                                  employeeName: emp?.name || '',
+                                  amount: perEmployee
+                                };
+                              });
+                              editForm.setValue("distributions", distributions);
+                              editForm.setValue("numEmployees", updated.length);
+                            }}
+                          />
+                        </FormControl>
+                        <span>{employee.name}</span>
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={updateMutation.isPending}
+              >
+                {updateMutation.isPending ? "Updating..." : "Update Tip Record"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
