@@ -9,9 +9,9 @@ export function Header() {
     <header className="bg-primary text-primary-foreground shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/">
-          <a className="text-xl font-bold">Restaurant Manager</a>
+          <a className="text-xl font-bold">Yeti Tips & Till</a>
         </Link>
-        
+
         {user && (
           <nav className="flex items-center gap-4">
             <Link href="/dashboard">
