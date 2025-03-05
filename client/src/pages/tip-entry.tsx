@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Edit2 } from "lucide-react";
+import { Edit2, CheckCircle } from "lucide-react";
 import { useState, useEffect, ReactNode } from "react";
 
 type TipFormSchema = z.infer<typeof insertTipSchema>;
@@ -109,10 +109,19 @@ export default function TipEntry() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
 
+      // Show success notification with distribution details
       toast({
-        title: "Tips Recorded Successfully",
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span>Tips Recorded Successfully</span>
+          </div>
+        ),
         description: (
           <div className="mt-2">
+            <div className="mb-2 text-sm font-medium">
+              Total Amount: ${totalAmount.toFixed(2)}
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -129,8 +138,12 @@ export default function TipEntry() {
                 ))}
               </TableBody>
             </Table>
+            <div className="mt-2 text-sm text-muted-foreground text-center">
+              Distribution recorded at {new Date().toLocaleTimeString()}
+            </div>
           </div>
         ),
+        duration: 5000, // Show for 5 seconds
       });
 
       form.reset();
@@ -208,7 +221,7 @@ export default function TipEntry() {
 
               {tipDistributions.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-2">Tip Distribution</h3>
+                  <h3 className="text-lg font-semibold mb-2">Tip Distribution Preview</h3>
                   <Table>
                     <TableHeader>
                       <TableRow>
