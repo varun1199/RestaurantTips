@@ -30,20 +30,22 @@ export async function registerRoutes(app: Express) {
     next();
   };
 
-  // Employee registration
+  // Employee routes
+  app.get("/api/employees", requireAuth, async (_req, res) => {
+    const employees = await storage.getActiveEmployees();
+    res.json(employees);
+  });
+
+  // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = registrationSchema.parse(req.body);
-
-      // Check if username already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already taken" });
       }
 
-      // Generate unique employee ID
       const employeeId = nanoid(10);
-
       const user = await storage.createUser({
         username: userData.username,
         password: userData.password,
@@ -52,7 +54,6 @@ export async function registerRoutes(app: Express) {
         email: userData.email
       });
 
-      // Log the user in after registration
       req.session.userId = user.id;
       res.status(201).json({ 
         user: { 
@@ -66,7 +67,6 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Existing routes
   app.post("/api/auth/login", async (req, res) => {
     const { username, password } = req.body;
     const user = await storage.getUserByUsername(username);
@@ -97,7 +97,13 @@ export async function registerRoutes(app: Express) {
 
   app.get("/api/tips", requireAuth, async (req, res) => {
     const tips = await storage.getAllTips();
-    res.json(tips);
+    const tipsWithEmployees = await Promise.all(
+      tips.map(async (tip) => ({
+        ...tip,
+        employees: await storage.getTipEmployees(tip.id)
+      }))
+    );
+    res.json(tipsWithEmployees);
   });
 
   // Till routes
