@@ -54,14 +54,15 @@ export class DatabaseStorage implements IStorage {
     const { distributions, employeeIds, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
-      // Parse the date string and set to noon UTC
-      const dateStr = tipData.date.split('T')[0]; // Extract just the date part
-      const [year, month, day] = dateStr.split('-').map(Number);
-      const localDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+      // Parse the date string into year, month, day
+      const [year, month, day] = tipData.date.split('-').map(Number);
 
-      // Insert the tip with UTC noon time to ensure correct date
+      // Create a date object for the selected date at start of day UTC
+      const tipDate = new Date(Date.UTC(year, month - 1, day));
+
+      // Insert the tip
       const [tip] = await tx.insert(tips).values({
-        date: localDate,
+        date: tipDate,
         amount: tipData.amount.toString(),
         numEmployees: tipData.numEmployees.toString(),
         submittedById: tipData.submittedById

@@ -112,8 +112,8 @@ export default function TipEntry() {
       // Ensure proper formatting of the data
       const formattedData = {
         ...data,
-        // Ensure date is properly formatted with time set to noon to avoid timezone issues
-        date: `${data.date}T12:00:00.000Z`,
+        // Send the date without time component to avoid timezone issues
+        date: data.date,
         distributions: tipDistributions.map(dist => ({
           employeeId: dist.employeeId,
           employeeName: dist.employeeName,
