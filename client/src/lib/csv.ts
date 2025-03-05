@@ -98,20 +98,34 @@ export function exportTipsToCSV(tips: TipWithEmployees[], startDate: Date, endDa
 
   const rows: string[][] = [];
 
+  // Calculate period totals for all employees
+  const periodTotalsMap = new Map<string, { total: number; shifts: number }>();
+  weeklyReports.forEach(report => {
+    report.employeeWeeklyTotals.forEach(emp => {
+      const current = periodTotalsMap.get(emp.employeeName) || { total: 0, shifts: 0 };
+      current.total += emp.weeklyTotal;
+      current.shifts += emp.numberOfShifts;
+      periodTotalsMap.set(emp.employeeName, current);
+    });
+  });
+
+  // Add report title and date range
+  rows.push([`Tip Report: ${format(startDate, "MMMM d, yyyy")} to ${format(endDate, "MMMM d, yyyy")}`]);
+  rows.push([""]);
+
+  // Add daily details for each week
   weeklyReports.forEach(report => {
     // Add week header
-    rows.push([
-      `Week of ${format(report.weekStart, "MMM d")} - ${format(report.weekEnd, "MMM d, yyyy")}`
-    ]);
+    rows.push([`Week of ${format(report.weekStart, "MMM d")} - ${format(report.weekEnd, "MMM d, yyyy")}`]);
     rows.push([""]);
 
     // Add daily totals header
     rows.push([
       "Date",
       "Day",
-      "Total Tips",
-      "Employee",
-      "Amount"
+      "Daily Total",
+      "Employee Name",
+      "Employee Amount"
     ]);
 
     // Add daily details
@@ -128,39 +142,43 @@ export function exportTipsToCSV(tips: TipWithEmployees[], startDate: Date, endDa
       rows.push([""]); // Space between days
     });
 
-    // Add weekly summary header
-    rows.push([""]);
+    // Add weekly summary
     rows.push(["Weekly Summary"]);
-    rows.push([
-      "Employee",
-      "Total Tips",
-      "Number of Shifts",
-      "Average per Shift"
-    ]);
-
-    // Add weekly totals for each employee
     report.employeeWeeklyTotals.forEach(emp => {
       rows.push([
+        "",
+        "",
+        "",
         emp.employeeName,
-        emp.weeklyTotal.toFixed(2),
-        emp.numberOfShifts.toString(),
-        (emp.weeklyTotal / emp.numberOfShifts).toFixed(2)
+        emp.weeklyTotal.toFixed(2)
       ]);
     });
 
-    // Add grand total for the week
-    const weeklyGrandTotal = report.employeeWeeklyTotals
-      .reduce((sum, emp) => sum + emp.weeklyTotal, 0);
-    rows.push([""]);
-    rows.push([
-      "Week Total",
-      weeklyGrandTotal.toFixed(2)
-    ]);
-
-    // Add space between weeks
-    rows.push([""]);
+    const weekTotal = report.employeeWeeklyTotals.reduce((sum, emp) => sum + emp.weeklyTotal, 0);
+    rows.push(["", "", "", "Week Total", weekTotal.toFixed(2)]);
+    rows.push([""]); // Space between weeks
     rows.push([""]);
   });
+
+  // Add period totals
+  rows.push(["Period Summary"]);
+  rows.push(["Employee Name", "Total Tips", "Total Shifts", "Average per Shift"]);
+
+  Array.from(periodTotalsMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .forEach(([employeeName, { total, shifts }]) => {
+      rows.push([
+        employeeName,
+        total.toFixed(2),
+        shifts.toString(),
+        (total / shifts).toFixed(2)
+      ]);
+    });
+
+  const periodTotal = Array.from(periodTotalsMap.values())
+    .reduce((sum, { total }) => sum + total, 0);
+  rows.push([""]);
+  rows.push(["Period Total", periodTotal.toFixed(2)]);
 
   const csvContent = rows.map(row => row.join(",")).join("\n");
 
