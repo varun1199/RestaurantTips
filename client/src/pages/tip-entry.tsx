@@ -37,15 +37,30 @@ export default function TipEntry() {
     form.setValue("numEmployees", selectedEmployees.length);
   }
 
+  const perEmployeeAmount = Number(form.watch("amount")) / selectedEmployees.length;
+
   const mutation = useMutation({
     mutationFn: (data: TipFormSchema) =>
       apiRequest("POST", "/api/tips", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
+
+      // Show distribution details in success message
+      const selectedEmployeeNames = employees
+        .filter(emp => selectedEmployees.includes(emp.id))
+        .map(emp => emp.name);
+
       toast({
-        title: "Success",
-        description: "Tips have been recorded",
+        title: "Tips Recorded Successfully",
+        description: (
+          <div className="mt-2 space-y-2">
+            <p>Total Amount: ${Number(form.getValues("amount")).toFixed(2)}</p>
+            <p>Amount per Employee: ${perEmployeeAmount.toFixed(2)}</p>
+            <p className="text-sm">Distribution for: {selectedEmployeeNames.join(", ")}</p>
+          </div>
+        ),
       });
+
       form.reset();
     },
     onError: () => {
@@ -122,7 +137,7 @@ export default function TipEntry() {
                 {selectedEmployees.length} employees selected
                 {selectedEmployees.length > 0 && (
                   <div className="mt-1">
-                    Tips per employee: ${(Number(form.getValues("amount")) / selectedEmployees.length).toFixed(2)}
+                    Tips per employee: ${perEmployeeAmount.toFixed(2)}
                   </div>
                 )}
               </div>

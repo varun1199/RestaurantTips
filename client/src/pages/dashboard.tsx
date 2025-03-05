@@ -3,10 +3,14 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { exportTipsToCSV } from "@/lib/csv";
-import type { Tip } from "@shared/schema";
+import type { Tip, Employee } from "@shared/schema";
+
+interface TipWithEmployees extends Tip {
+  employees: Employee[];
+}
 
 export default function Dashboard() {
-  const { data: tips, isLoading } = useQuery<Tip[]>({
+  const { data: tips, isLoading } = useQuery<TipWithEmployees[]>({
     queryKey: ["/api/tips"],
   });
 
@@ -17,7 +21,7 @@ export default function Dashboard() {
   const chartData = tips?.map(tip => ({
     date: new Date(tip.date).toLocaleDateString(),
     amount: Number(tip.amount),
-    perEmployee: Number(tip.amount) / Number(tip.numEmployees)
+    perEmployee: Number(tip.amount) / tip.employees.length
   }));
 
   const totalTips = tips?.reduce((sum, tip) => sum + Number(tip.amount), 0) || 0;
@@ -76,6 +80,34 @@ export default function Dashboard() {
               />
             </LineChart>
           </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Tip Distributions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {tips?.slice(0, 5).map((tip) => (
+              <div key={tip.id} className="border-b pb-4">
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium">
+                    {new Date(tip.date).toLocaleDateString()}
+                  </span>
+                  <span className="font-bold">
+                    Total: ${Number(tip.amount).toFixed(2)}
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <div>Per Employee: ${(Number(tip.amount) / tip.employees.length).toFixed(2)}</div>
+                  <div className="mt-1">
+                    Employees: {tip.employees.map(emp => emp.name).join(", ")}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>
