@@ -6,6 +6,7 @@ import { useAuth } from "./lib/auth";
 import { Header } from "./components/layout/header";
 
 import Login from "@/pages/login";
+import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import TipEntry from "@/pages/tip-entry";
 import TillCalculator from "@/pages/till-calculator";
@@ -14,6 +15,8 @@ import NotFound from "@/pages/not-found";
 function PrivateRoute({ component: Component, ...rest }: any) {
   const { user } = useAuth();
   if (!user) return <Redirect to="/login" />;
+  // Only allow admin users to access the dashboard
+  if (rest.requireAdmin && !user.isAdmin) return <Redirect to="/tip-entry" />;
   return <Component {...rest} />;
 }
 
@@ -25,9 +28,10 @@ function App() {
         <main className="container mx-auto px-4 py-8">
           <Switch>
             <Route path="/login" component={Login} />
-            <Route path="/" component={() => <Redirect to="/dashboard" />} />
+            <Route path="/register" component={Register} />
+            <Route path="/" component={() => <Redirect to="/tip-entry" />} />
             <Route path="/dashboard" component={() => (
-              <PrivateRoute component={Dashboard} />
+              <PrivateRoute component={Dashboard} requireAdmin={true} />
             )} />
             <Route path="/tip-entry" component={() => (
               <PrivateRoute component={TipEntry} />

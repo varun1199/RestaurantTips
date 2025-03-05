@@ -1,8 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertTipSchema, insertTillSchema, insertUserSchema } from "@shared/schema";
+import { insertTipSchema, insertTillSchema, insertUserSchema, registrationSchema } from "@shared/schema";
 import session from "express-session";
+import { nanoid } from "nanoid";
 
 declare module "express-session" {
   interface SessionData {
@@ -29,11 +30,47 @@ export async function registerRoutes(app: Express) {
     next();
   };
 
-  // Auth routes
+  // Employee registration
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData = registrationSchema.parse(req.body);
+
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+
+      // Generate unique employee ID
+      const employeeId = nanoid(10);
+
+      const user = await storage.createUser({
+        username: userData.username,
+        password: userData.password,
+        isAdmin: false,
+        employeeId,
+        email: userData.email
+      });
+
+      // Log the user in after registration
+      req.session.userId = user.id;
+      res.status(201).json({ 
+        user: { 
+          ...user,
+          password: undefined 
+        },
+        message: "Registration successful" 
+      });
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Invalid input" });
+    }
+  });
+
+  // Existing routes
   app.post("/api/auth/login", async (req, res) => {
     const { username, password } = req.body;
     const user = await storage.getUserByUsername(username);
-    
+
     if (!user || user.password !== password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }

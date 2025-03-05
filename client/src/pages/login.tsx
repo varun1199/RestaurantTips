@@ -1,9 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { login } from "@/lib/auth";
@@ -17,7 +17,7 @@ const loginSchema = z.object({
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -28,8 +28,8 @@ export default function Login() {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      await login(values.username, values.password);
-      setLocation("/dashboard");
+      const user = await login(values.username, values.password);
+      setLocation(user.isAdmin ? "/dashboard" : "/tip-entry");
     } catch (error) {
       toast({
         title: "Error",
@@ -78,6 +78,14 @@ export default function Login() {
             </form>
           </Form>
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            New employee?{" "}
+            <Link href="/register">
+              <a className="text-primary hover:underline">Register here</a>
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

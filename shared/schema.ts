@@ -8,9 +8,11 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
+  employeeId: text("employee_id").unique(), // Unique employee ID
+  email: text("email"), // Optional email field
 });
 
-// Tip record model
+// Rest of the schema remains unchanged
 export const tips = pgTable("tips", {
   id: serial("id").primaryKey(),
   date: timestamp("date").notNull().defaultNow(),
@@ -19,7 +21,6 @@ export const tips = pgTable("tips", {
   submittedById: serial("submitted_by_id").references(() => users.id),
 });
 
-// Till calculation model
 export const tills = pgTable("tills", {
   id: serial("id").primaryKey(),
   date: timestamp("date").notNull().defaultNow(),
@@ -37,8 +38,16 @@ export const tills = pgTable("tills", {
   submittedById: serial("submitted_by_id").references(() => users.id),
 });
 
-// Schemas for insertion
+// Update schemas for insertion
 export const insertUserSchema = createInsertSchema(users);
+export const registrationSchema = insertUserSchema.extend({
+  email: z.string().email("Invalid email format").optional(),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export const insertTipSchema = createInsertSchema(tips).omit({ id: true, date: true });
 export const insertTillSchema = createInsertSchema(tills).omit({ id: true, date: true });
 
