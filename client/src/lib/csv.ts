@@ -1,5 +1,5 @@
 import { Tip, Employee } from "@shared/schema";
-import { format, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 
 interface TipWithEmployees extends Tip {
   employees: (Employee & { amount: number })[];
@@ -25,11 +25,17 @@ interface WeeklyReport {
   }[];
 }
 
-function generateWeeklyReports(tips: TipWithEmployees[]): WeeklyReport[] {
+function generateWeeklyReports(tips: TipWithEmployees[], startDate: Date, endDate: Date): WeeklyReport[] {
+  // Filter tips within the date range
+  const filteredTips = tips.filter(tip => {
+    const tipDate = new Date(tip.date);
+    return isWithinInterval(tipDate, { start: startDate, end: endDate });
+  });
+
   // Group tips by week
   const weeklyTips = new Map<string, TipWithEmployees[]>();
 
-  tips.forEach(tip => {
+  filteredTips.forEach(tip => {
     const tipDate = new Date(tip.date);
     const weekStart = startOfWeek(tipDate, { weekStartsOn: 1 }); // Start week on Monday
     const weekKey = format(weekStart, "yyyy-MM-dd");
@@ -87,8 +93,8 @@ function generateWeeklyReports(tips: TipWithEmployees[]): WeeklyReport[] {
   }).sort((a, b) => b.weekStart.getTime() - a.weekStart.getTime()); // Most recent first
 }
 
-export function exportTipsToCSV(tips: TipWithEmployees[]) {
-  const weeklyReports = generateWeeklyReports(tips);
+export function exportTipsToCSV(tips: TipWithEmployees[], startDate: Date, endDate: Date) {
+  const weeklyReports = generateWeeklyReports(tips, startDate, endDate);
 
   const rows: string[][] = [];
 
@@ -161,7 +167,7 @@ export function exportTipsToCSV(tips: TipWithEmployees[]) {
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", `tips_report_${format(new Date(), "yyyy-MM-dd")}.csv`);
+  link.setAttribute("download", `tips_report_${format(startDate, "yyyy-MM-dd")}_to_${format(endDate, "yyyy-MM-dd")}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
