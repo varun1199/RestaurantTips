@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertTipSchema, insertTillSchema, insertUserSchema, registrationSchema } from "@shared/schema";
+import { insertTipSchema, insertTillSchema, registrationSchema, updateTipDistributionSchema } from "@shared/schema";
 import session from "express-session";
 import { nanoid } from "nanoid";
 
@@ -100,10 +100,22 @@ export async function registerRoutes(app: Express) {
     const tipsWithEmployees = await Promise.all(
       tips.map(async (tip) => ({
         ...tip,
-        employees: await storage.getTipEmployees(tip.id)
+        employeeDistribution: await storage.getTipEmployees(tip.id)
       }))
     );
     res.json(tipsWithEmployees);
+  });
+
+  // New route for updating tip distribution
+  app.patch("/api/tips/:id/distribution", requireAuth, async (req, res) => {
+    try {
+      const tipId = parseInt(req.params.id);
+      const distribution = updateTipDistributionSchema.parse(req.body);
+      await storage.updateTipDistribution(tipId, distribution);
+      res.json({ message: "Tip distribution updated successfully" });
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Invalid input" });
+    }
   });
 
   // Till routes
