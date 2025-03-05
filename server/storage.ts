@@ -24,7 +24,7 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // User methods remain unchanged
+  // User methods
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
@@ -40,7 +40,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Employee methods remain unchanged
+  // Employee methods
   async getAllEmployees(): Promise<Employee[]> {
     return db.select().from(employees);
   }
@@ -54,9 +54,9 @@ export class DatabaseStorage implements IStorage {
     const { distributions, employeeIds, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
-      // Insert the tip with exact date from form
+      // Insert the tip with proper date conversion
       const [tip] = await tx.insert(tips).values({
-        date: tipData.date, // Use the date directly from the form
+        date: new Date(tipData.date),
         amount: tipData.amount.toString(),
         numEmployees: tipData.numEmployees.toString(),
         submittedById: tipData.submittedById
@@ -109,7 +109,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  // Till methods remain unchanged
+  // Till methods
   async createTill(insertTill: InsertTill): Promise<Till> {
     const [till] = await db.insert(tills).values(insertTill).returning();
     return till;
