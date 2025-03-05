@@ -1,4 +1,6 @@
-import { User, InsertUser, Tip, InsertTip, Till, InsertTill } from "@shared/schema";
+import { users, tips, tills, type User, type InsertUser, type Tip, type InsertTip, type Till, type InsertTill } from "@shared/schema";
+import { db } from "./db";
+import { eq, gte, lte, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -16,93 +18,68 @@ export interface IStorage {
   getTillsByDate(date: Date): Promise<Till[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private tips: Map<number, Tip>;
-  private tills: Map<number, Till>;
-  private currentIds: { users: number; tips: number; tills: number };
-
-  constructor() {
-    this.users = new Map();
-    this.tips = new Map();
-    this.tills = new Map();
-    this.currentIds = { users: 1, tips: 1, tills: 1 };
-
-    // Add default admin user
-    this.createUser({
-      username: "admin",
-      password: "admin123", // In production, this should be hashed
-      isAdmin: true
-    } as InsertUser);
-  }
-
+export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentIds.users++;
-    const user: User = { id, username: insertUser.username, password: insertUser.password, isAdmin: insertUser.isAdmin ?? false };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async getUserById(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async createTip(insertTip: InsertTip): Promise<Tip> {
-    const id = this.currentIds.tips++;
-    const tip: Tip = {
-      id,
-      date: new Date(),
-      submittedById: insertTip.submittedById,
-      amount: insertTip.amount,
-      numEmployees: insertTip.numEmployees
-    };
-    this.tips.set(id, tip);
+    const [tip] = await db.insert(tips).values(insertTip).returning();
     return tip;
   }
 
   async getTipsByDate(date: Date): Promise<Tip[]> {
-    return Array.from(this.tips.values()).filter(
-      (tip) => tip.date.toDateString() === date.toDateString()
-    );
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return db.select().from(tips)
+      .where(and(gte(tips.date, startOfDay), lte(tips.date, endOfDay)));
   }
 
   async getAllTips(): Promise<Tip[]> {
-    return Array.from(this.tips.values());
+    return db.select().from(tips);
   }
 
   async createTill(insertTill: InsertTill): Promise<Till> {
-    const id = this.currentIds.tills++;
-    const till: Till = {
-      id,
-      date: new Date(),
-      submittedById: insertTill.submittedById,
-      pennies: insertTill.pennies,
-      nickels: insertTill.nickels,
-      dimes: insertTill.dimes,
-      quarters: insertTill.quarters,
-      ones: insertTill.ones,
-      fives: insertTill.fives,
-      tens: insertTill.tens,
-      twenties: insertTill.twenties,
-      fifties: insertTill.fifties,
-      hundreds: insertTill.hundreds,
-      total: insertTill.total
-    };
-    this.tills.set(id, till);
+    const [till] = await db.insert(tills).values(insertTill).returning();
     return till;
   }
 
   async getTillsByDate(date: Date): Promise<Till[]> {
-    return Array.from(this.tills.values()).filter(
-      (till) => till.date.toDateString() === date.toDateString()
-    );
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return db.select().from(tills)
+      .where(and(gte(tills.date, startOfDay), lte(tills.date, endOfDay)));
   }
 }
 
-export const storage = new MemStorage();
+// Create default admin user on startup
+async function initializeDatabase() {
+  const adminUser = await storage.getUserByUsername("admin");
+  if (!adminUser) {
+    await storage.createUser({
+      username: "admin",
+      password: "admin123", // In production, this should be hashed
+      isAdmin: true
+    });
+  }
+}
+
+export const storage = new DatabaseStorage();
+initializeDatabase().catch(console.error);
