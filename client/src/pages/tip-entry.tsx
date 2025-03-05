@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -55,7 +55,8 @@ export default function TipEntry() {
       amount: 0,
       numEmployees: 1,
       employeeIds: [],
-      date: format(new Date(), "yyyy-MM-dd"), // Default to today's date
+      date: format(new Date(), "yyyy-MM-dd"),
+      distributions: [], // Initialize distributions
     },
   });
 
@@ -107,12 +108,21 @@ export default function TipEntry() {
   const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy");
 
   const mutation = useMutation({
-    mutationFn: (data: TipFormSchema) =>
-      apiRequest("POST", "/api/tips", {
+    mutationFn: (data: TipFormSchema) => {
+      // Ensure proper formatting of the data
+      const formattedData = {
         ...data,
-        distributions: tipDistributions
-      }),
+        distributions: tipDistributions.map(dist => ({
+          employeeId: dist.employeeId,
+          employeeName: dist.employeeName,
+          amount: Number(dist.amount)
+        }))
+      };
+      console.log("Submitting tip data:", formattedData);
+      return apiRequest("POST", "/api/tips", formattedData);
+    },
     onSuccess: () => {
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
 
       toast({
@@ -201,10 +211,10 @@ export default function TipEntry() {
                   <FormItem>
                     <FormLabel>Total Tips ($)</FormLabel>
                     <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        step="0.01" 
+                      <Input
+                        {...field}
+                        type="number"
+                        step="0.01"
                         min="0"
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -221,7 +231,7 @@ export default function TipEntry() {
                     key={employee.id}
                     control={form.control}
                     name="employeeIds"
-                    render={({field}) => (
+                    render={({ field }) => (
                       <FormItem className="flex items-center space-x-2">
                         <FormControl>
                           <Checkbox

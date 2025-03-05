@@ -88,13 +88,16 @@ export async function registerRoutes(app: Express) {
   // Tips routes
   app.post("/api/tips", requireAuth, async (req, res) => {
     try {
-      console.log("Received tip data:", req.body);
+      console.log("Received tip data:", JSON.stringify(req.body, null, 2));
       const tipData = insertTipSchema.parse(req.body);
+      console.log("Parsed tip data:", JSON.stringify(tipData, null, 2));
+
       const tip = await storage.createTip({
         ...tipData,
         submittedById: req.session.userId!
       });
-      console.log("Created tip:", tip);
+
+      console.log("Created tip:", JSON.stringify(tip, null, 2));
       res.json(tip);
     } catch (error) {
       console.error("Error creating tip:", error);
@@ -105,12 +108,20 @@ export async function registerRoutes(app: Express) {
   app.get("/api/tips", requireAuth, async (_req, res) => {
     try {
       const tips = await storage.getAllTips();
+      console.log("Retrieved tips:", JSON.stringify(tips, null, 2));
+
       const tipsWithEmployees = await Promise.all(
-        tips.map(async (tip) => ({
-          ...tip,
-          employees: await storage.getTipEmployees(tip.id)
-        }))
+        tips.map(async (tip) => {
+          const employees = await storage.getTipEmployees(tip.id);
+          console.log(`Employees for tip ${tip.id}:`, JSON.stringify(employees, null, 2));
+          return {
+            ...tip,
+            employees
+          };
+        })
       );
+
+      console.log("Final tips with employees:", JSON.stringify(tipsWithEmployees, null, 2));
       res.json(tipsWithEmployees);
     } catch (error) {
       console.error("Error fetching tips:", error);
