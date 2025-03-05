@@ -14,6 +14,7 @@ export interface IStorage {
 
   // Tip operations
   createTip(tip: InsertTip): Promise<Tip>;
+  updateTip(id: number, tip: InsertTip): Promise<Tip>;
   getTipsByDate(date: Date): Promise<Tip[]>;
   getAllTips(): Promise<Tip[]>;
   getTipEmployees(tipId: number): Promise<(Employee & { amount: number })[]>;
@@ -69,6 +70,46 @@ export class DatabaseStorage implements IStorage {
       }).returning();
 
       // Create tip-employee relationships
+      await Promise.all(
+        distributions.map(dist =>
+          tx.insert(tipEmployees).values({
+            tipId: tip.id,
+            employeeId: dist.employeeId,
+            amount: dist.amount.toString()
+          })
+        )
+      );
+
+      return tip;
+    });
+  }
+
+  async updateTip(id: number, insertTip: InsertTip): Promise<Tip> {
+    const { distributions, employeeIds, ...tipData } = insertTip;
+
+    return await db.transaction(async (tx) => {
+      // Parse the date string into year, month, day
+      const [year, month, day] = tipData.date.split('-').map(Number);
+
+      // Create a date object for the selected date at start of day UTC
+      const tipDate = new Date(Date.UTC(year, month - 1, day));
+
+      // Update the tip
+      const [tip] = await tx
+        .update(tips)
+        .set({
+          date: tipDate,
+          amount: tipData.amount.toString(),
+          numEmployees: tipData.numEmployees.toString(),
+          submittedById: tipData.submittedById
+        })
+        .where(eq(tips.id, id))
+        .returning();
+
+      // Delete existing tip-employee relationships
+      await tx.delete(tipEmployees).where(eq(tipEmployees.tipId, id));
+
+      // Create new tip-employee relationships
       await Promise.all(
         distributions.map(dist =>
           tx.insert(tipEmployees).values({

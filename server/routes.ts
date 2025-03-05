@@ -105,6 +105,24 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // New endpoint for updating tips
+  app.patch("/api/tips/:id", requireAuth, async (req, res) => {
+    try {
+      const tipId = parseInt(req.params.id);
+      const tipData = insertTipSchema.parse(req.body);
+
+      const tip = await storage.updateTip(tipId, {
+        ...tipData,
+        submittedById: req.session.userId!
+      });
+
+      res.json(tip);
+    } catch (error) {
+      console.error("Error updating tip:", error);
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to update tip" });
+    }
+  });
+
   app.get("/api/tips", requireAuth, async (_req, res) => {
     try {
       const tips = await storage.getAllTips();
