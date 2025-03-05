@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -100,6 +101,9 @@ export default function TipEntry() {
     setEditingEmployee(null);
   };
 
+  const currentDate = new Date();
+  const formattedDate = format(currentDate, "EEEE, MMMM d, yyyy");
+
   const mutation = useMutation({
     mutationFn: (data: TipFormSchema) =>
       apiRequest("POST", "/api/tips", {
@@ -109,7 +113,6 @@ export default function TipEntry() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tips"] });
 
-      // Show success notification with distribution details
       toast({
         title: (
           <div className="flex items-center gap-2">
@@ -119,8 +122,9 @@ export default function TipEntry() {
         ),
         description: (
           <div className="mt-2">
-            <div className="mb-2 text-sm font-medium">
-              Total Amount: ${totalAmount.toFixed(2)}
+            <div className="text-sm font-medium mb-2">
+              <div>Date: {formattedDate}</div>
+              <div>Total Amount: ${totalAmount.toFixed(2)}</div>
             </div>
             <Table>
               <TableHeader>
@@ -139,11 +143,11 @@ export default function TipEntry() {
               </TableBody>
             </Table>
             <div className="mt-2 text-sm text-muted-foreground text-center">
-              Distribution recorded at {new Date().toLocaleTimeString()}
+              Distribution recorded at {format(currentDate, "h:mm a")}
             </div>
           </div>
         ),
-        duration: 5000, // Show for 5 seconds
+        duration: 5000,
       });
 
       form.reset();
@@ -162,7 +166,7 @@ export default function TipEntry() {
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle>Record Daily Tips</CardTitle>
+          <CardTitle>Record Daily Tips - {formattedDate}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>

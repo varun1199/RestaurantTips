@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { exportTipsToCSV } from "@/lib/csv";
+import { format } from "date-fns";
 import type { Tip, Employee } from "@shared/schema";
 
 interface TipWithEmployees extends Tip {
@@ -19,7 +20,7 @@ export default function Dashboard() {
   }
 
   const chartData = tips?.map(tip => ({
-    date: new Date(tip.date).toLocaleDateString(),
+    date: format(new Date(tip.date), "MMM d"),
     amount: Number(tip.amount),
     perEmployee: Number(tip.amount) / tip.employees.length
   }));
@@ -93,7 +94,7 @@ export default function Dashboard() {
               <div key={tip.id} className="border-b pb-4">
                 <div className="flex justify-between mb-2">
                   <span className="font-medium">
-                    {new Date(tip.date).toLocaleDateString()}
+                    {format(new Date(tip.date), "EEEE, MMMM d, yyyy")}
                   </span>
                   <span className="font-bold">
                     Total: ${Number(tip.amount).toFixed(2)}
