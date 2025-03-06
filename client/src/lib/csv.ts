@@ -94,7 +94,7 @@ export function exportTipsToCSV(tips: TipWithEmployees[], startDate: Date, endDa
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.setAttribute("download", `tips_report_${format(startDate, "yyyy-MM-dd")}_to_${format(endDate, "yyyy-MM-dd")}.csv`);
+  link.setAttribute("download", `Yeti_Tips_Report_${format(startDate, "yyyy-MM-dd")}_to_${format(endDate, "yyyy-MM-dd")}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
