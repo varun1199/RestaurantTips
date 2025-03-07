@@ -9,6 +9,7 @@ export interface IStorage {
   getUserById(id: number): Promise<User | undefined>;
   getUserByEmployeeId(employeeId: string): Promise<User | undefined>;
   updateUserPassword(id: number, newPassword: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;  // Added this method
 
   // Employee operations
   getAllEmployees(): Promise<Employee[]>;
@@ -53,6 +54,10 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ password: newPassword })
       .where(eq(users.id, id));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users);
   }
 
   // Employee methods

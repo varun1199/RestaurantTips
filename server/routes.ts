@@ -30,45 +30,6 @@ export async function registerRoutes(app: Express) {
     next();
   };
 
-  // Password recovery endpoints
-  app.get("/api/auth/security-question/:employeeId", async (req, res) => {
-    try {
-      const user = await storage.getUserByEmployeeId(req.params.employeeId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      res.json({ securityQuestion: user.securityQuestion });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch security question" });
-    }
-  });
-
-  app.post("/api/auth/reset-password", async (req, res) => {
-    try {
-      const { employeeId, securityAnswer, newPassword } = req.body;
-      const user = await storage.getUserByEmployeeId(employeeId);
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      if (user.securityAnswer !== securityAnswer) {
-        return res.status(401).json({ message: "Incorrect security answer" });
-      }
-
-      await storage.updateUserPassword(user.id, newPassword);
-      res.json({ message: "Password reset successful" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to reset password" });
-    }
-  });
-
-  // Employee routes
-  app.get("/api/employees", requireAuth, async (_req, res) => {
-    const employees = await storage.getActiveEmployees();
-    res.json(employees);
-  });
-
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -79,9 +40,15 @@ export async function registerRoutes(app: Express) {
       }
 
       const employeeId = nanoid(10);
+
+      // Check if this is the first user
+      const users = await storage.getAllUsers();
+      const isFirstUser = users.length === 0;
+
       const user = await storage.createUser({
         ...userData,
         employeeId,
+        isAdmin: isFirstUser // Make the first user an admin
       });
 
       req.session.userId = user.id;
@@ -115,6 +82,43 @@ export async function registerRoutes(app: Express) {
     });
   });
 
+  // Employee routes
+  app.get("/api/employees", requireAuth, async (_req, res) => {
+    const employees = await storage.getActiveEmployees();
+    res.json(employees);
+  });
+  // Password recovery endpoints
+  app.get("/api/auth/security-question/:employeeId", async (req, res) => {
+    try {
+      const user = await storage.getUserByEmployeeId(req.params.employeeId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ securityQuestion: user.securityQuestion });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch security question" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { employeeId, securityAnswer, newPassword } = req.body;
+      const user = await storage.getUserByEmployeeId(employeeId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.securityAnswer !== securityAnswer) {
+        return res.status(401).json({ message: "Incorrect security answer" });
+      }
+
+      await storage.updateUserPassword(user.id, newPassword);
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
   // Tips routes
   app.post("/api/tips", requireAuth, async (req, res) => {
     try {
