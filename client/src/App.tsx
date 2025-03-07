@@ -10,6 +10,7 @@ import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import TipEntry from "@/pages/tip-entry";
 import TillCalculator from "@/pages/till-calculator";
+import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function PrivateRoute({ component: Component, ...rest }: any) {
@@ -38,6 +39,9 @@ function App() {
             )} />
             <Route path="/till-calculator" component={() => (
               <PrivateRoute component={TillCalculator} />
+            )} />
+            <Route path="/profile" component={() => (
+              <PrivateRoute component={Profile} />
             )} />
             <Route component={NotFound} />
           </Switch>
