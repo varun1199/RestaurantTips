@@ -11,7 +11,7 @@ export function Header() {
         <Link href="/">
           <a className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <img 
-              src="/assets/Screenshot 2025-03-06 222720.png" 
+              src="/assets/logo.png" 
               alt="Yeti Tips & Till Logo" 
               className="h-12 w-auto"
             />
