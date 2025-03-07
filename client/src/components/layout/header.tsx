@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth, logout } from "@/lib/auth";
 import { Link } from "wouter";
-import { Logo } from "@/components/icons/logo";
 
 export function Header() {
   const { user } = useAuth();
@@ -11,7 +10,11 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/">
           <a className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <Logo className="h-8 w-8" />
+            <img 
+              src="/assets/Screenshot 2025-03-06 222720.png" 
+              alt="Yeti Tips & Till Logo" 
+              className="h-12 w-auto"
+            />
             <span className="text-xl font-bold">Yeti Tips & Till</span>
           </a>
         </Link>
