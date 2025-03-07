@@ -10,9 +10,11 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
   employeeId: text("employee_id").unique(),
   email: text("email"),
+  securityQuestion: text("security_question").notNull(),
+  securityAnswer: text("security_answer").notNull(),
 });
 
-// New Employee model
+// Employee model
 export const employees = pgTable("employees", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -57,7 +59,9 @@ export const tills = pgTable("tills", {
 export const insertUserSchema = createInsertSchema(users);
 export const registrationSchema = insertUserSchema.extend({
   email: z.string().email("Invalid email format").optional(),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  securityQuestion: z.string().min(1, "Security question is required"),
+  securityAnswer: z.string().min(1, "Security answer is required"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],

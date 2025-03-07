@@ -14,7 +14,7 @@ type RegistrationData = z.infer<typeof registrationSchema>;
 export default function Register() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
+
   const form = useForm<RegistrationData>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
@@ -22,6 +22,8 @@ export default function Register() {
       password: "",
       confirmPassword: "",
       email: "",
+      securityQuestion: "",
+      securityAnswer: "",
     },
   });
 
@@ -109,6 +111,32 @@ export default function Register() {
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="securityQuestion"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Security Question</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter a security question for account recovery" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="securityAnswer"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Security Answer</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter the answer to your security question" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

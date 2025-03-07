@@ -30,6 +30,39 @@ export async function registerRoutes(app: Express) {
     next();
   };
 
+  // Password recovery endpoints
+  app.get("/api/auth/security-question/:employeeId", async (req, res) => {
+    try {
+      const user = await storage.getUserByEmployeeId(req.params.employeeId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ securityQuestion: user.securityQuestion });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch security question" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { employeeId, securityAnswer, newPassword } = req.body;
+      const user = await storage.getUserByEmployeeId(employeeId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.securityAnswer !== securityAnswer) {
+        return res.status(401).json({ message: "Incorrect security answer" });
+      }
+
+      await storage.updateUserPassword(user.id, newPassword);
+      res.json({ message: "Password reset successful" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // Employee routes
   app.get("/api/employees", requireAuth, async (_req, res) => {
     const employees = await storage.getActiveEmployees();
@@ -47,11 +80,8 @@ export async function registerRoutes(app: Express) {
 
       const employeeId = nanoid(10);
       const user = await storage.createUser({
-        username: userData.username,
-        password: userData.password,
-        isAdmin: false,
+        ...userData,
         employeeId,
-        email: userData.email
       });
 
       req.session.userId = user.id;
