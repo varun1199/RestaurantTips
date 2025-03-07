@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { insertTipSchema, insertTillSchema, insertUserSchema, registrationSchema } from "@shared/schema";
@@ -29,25 +29,6 @@ export async function registerRoutes(app: Express) {
     }
     next();
   };
-
-  // User profile routes
-  app.patch("/api/user/profile", requireAuth, async (req, res) => {
-    try {
-      const { username, email } = req.body;
-      const userId = req.session.userId!;
-
-      // Check if username is taken by another user
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser && existingUser.id !== userId) {
-        return res.status(400).json({ message: "Username already taken" });
-      }
-
-      const updatedUser = await storage.updateUser(userId, { username, email });
-      res.json({ ...updatedUser, password: undefined });
-    } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to update profile" });
-    }
-  });
 
   // Employee routes
   app.get("/api/employees", requireAuth, async (_req, res) => {
