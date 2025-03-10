@@ -56,6 +56,7 @@ export default function TipEntry() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tipDistributions, setTipDistributions] = useState<TipDistribution[]>([]);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [editingTip, setEditingTip] = useState<TipWithEmployees | null>(null);
   const [editDistributions, setEditDistributions] = useState<TipDistribution[]>([]);
   const [tipToDelete, setTipToDelete] = useState<TipWithEmployees | null>(null);
@@ -97,42 +98,38 @@ export default function TipEntry() {
   const perEmployeeAmount = selectedEmployees.length > 0 ? totalAmount / selectedEmployees.length : 0;
 
   // Update distributions when amount or selected employees change
-  const updateDistributions = () => {
-    const distributions = selectedEmployees.map(empId => {
-      const employee = employees.find(e => e.id === empId);
-      return {
-        employeeId: empId,
-        employeeName: employee?.name || '',
-        amount: perEmployeeAmount
-      };
-    });
-    setTipDistributions(distributions);
-  };
-
-  useEffect(() => {
-    updateDistributions();
-  }, [totalAmount, selectedEmployees.length, employees]);
-
-  // Watch edit form values for distribution updates
-  const editSelectedEmployees = editForm.watch("employeeIds") || [];
-  const editAmount = Number(editForm.watch("amount")) || 0;
-
-  useEffect(() => {
-    if (editSelectedEmployees.length > 0 && editAmount > 0) {
-      const perEmployee = editAmount / editSelectedEmployees.length;
-      const distributions = editSelectedEmployees.map(empId => {
+  const updateDistributions = (manual = false) => {
+    if (!manual) {
+      const perEmployeeAmount = selectedEmployees.length > 0 ? totalAmount / selectedEmployees.length : 0;
+      const distributions = selectedEmployees.map(empId => {
         const employee = employees.find(e => e.id === empId);
         return {
           employeeId: empId,
           employeeName: employee?.name || '',
-          amount: perEmployee
+          amount: perEmployeeAmount
         };
       });
-      setEditDistributions(distributions);
-      editForm.setValue("distributions", distributions);
-      editForm.setValue("numEmployees", editSelectedEmployees.length);
+      setTipDistributions(distributions);
+      setIsManualEdit(false);
     }
-  }, [editSelectedEmployees, editAmount, employees, editForm]);
+  };
+
+  useEffect(() => {
+    if (!isManualEdit) {
+      updateDistributions();
+    }
+  }, [totalAmount, selectedEmployees.length, employees]);
+
+  const handleDistributionChange = (employeeId: number, newAmount: number) => {
+    setIsManualEdit(true);
+    const updatedDistributions = tipDistributions.map(dist =>
+      dist.employeeId === employeeId ? { ...dist, amount: newAmount } : dist
+    );
+    setTipDistributions(updatedDistributions);
+  };
+
+  const distributionTotal = tipDistributions.reduce((sum, dist) => sum + dist.amount, 0);
+  const isDistributionValid = Math.abs(distributionTotal - totalAmount) < 0.01;
 
   const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy");
 
@@ -346,7 +343,17 @@ export default function TipEntry() {
 
               {tipDistributions.length > 0 && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-2">Tip Distribution Preview</h3>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-semibold">Tip Distribution</h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateDistributions(false)}
+                    >
+                      Reset to Equal Distribution
+                    </Button>
+                  </div>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -358,18 +365,38 @@ export default function TipEntry() {
                       {tipDistributions.map((dist) => (
                         <TableRow key={dist.employeeId}>
                           <TableCell>{dist.employeeName}</TableCell>
-                          <TableCell className="text-right">${dist.amount.toFixed(2)}</TableCell>
+                          <TableCell className="text-right">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={dist.amount}
+                              onChange={(e) => handleDistributionChange(dist.employeeId, Number(e.target.value))}
+                              className="w-24 text-right"
+                            />
+                          </TableCell>
                         </TableRow>
                       ))}
+                      <TableRow>
+                        <TableCell className="font-bold">Total</TableCell>
+                        <TableCell className={`text-right font-bold ${!isDistributionValid ? 'text-destructive' : ''}`}>
+                          ${distributionTotal.toFixed(2)}
+                        </TableCell>
+                      </TableRow>
                     </TableBody>
                   </Table>
+                  {!isDistributionValid && (
+                    <p className="text-sm text-destructive mt-2">
+                      Total distribution amount must equal the total tips amount (${totalAmount.toFixed(2)})
+                    </p>
+                  )}
                 </div>
               )}
 
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createMutation.isPending}
+                disabled={createMutation.isPending || !isDistributionValid}
               >
                 {createMutation.isPending ? "Recording..." : "Record Tips"}
               </Button>
