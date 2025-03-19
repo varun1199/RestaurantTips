@@ -15,6 +15,7 @@ const denominations = {
   dimes: 0.10,
   quarters: 0.25,
   ones: 1,
+  twos: 2,
   fives: 5,
   tens: 10,
   twenties: 20,
