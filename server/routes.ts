@@ -30,6 +30,21 @@ export async function registerRoutes(app: Express) {
     next();
   };
 
+  // Admin middleware
+  const requireAdmin = async (req: Request, res: Response, next: Function) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUserById(req.session.userId);
+    if (!user?.isAdmin) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    next();
+  };
+
+
   // Auth routes
   app.post("/api/auth/register", async (req, res) => {
     try {
@@ -87,6 +102,34 @@ export async function registerRoutes(app: Express) {
     const employees = await storage.getActiveEmployees();
     res.json(employees);
   });
+
+  // New employee management routes (admin only)
+  app.get("/api/employees/all", requireAdmin, async (_req, res) => {
+    const employees = await storage.getAllEmployees();
+    res.json(employees);
+  });
+
+  app.post("/api/employees", requireAdmin, async (req, res) => {
+    try {
+      const { name, isActive } = req.body;
+      const employee = await storage.createEmployee({ name, isActive });
+      res.status(201).json(employee);
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to create employee" });
+    }
+  });
+
+  app.patch("/api/employees/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { isActive } = req.body;
+      const employee = await storage.updateEmployee(id, { isActive });
+      res.json(employee);
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to update employee" });
+    }
+  });
+
   // Password recovery endpoints
   app.get("/api/auth/security-question/:employeeId", async (req, res) => {
     try {

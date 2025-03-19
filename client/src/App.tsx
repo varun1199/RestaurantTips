@@ -10,12 +10,13 @@ import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import TipEntry from "@/pages/tip-entry";
 import TillCalculator from "@/pages/till-calculator";
+import EmployeeManagement from "@/pages/employee-management";
 import NotFound from "@/pages/not-found";
 
 function PrivateRoute({ component: Component, ...rest }: any) {
   const { user } = useAuth();
   if (!user) return <Redirect to="/login" />;
-  // Only allow admin users to access the dashboard
+  // Only allow admin users to access the dashboard and employee management
   if (rest.requireAdmin && !user.isAdmin) return <Redirect to="/tip-entry" />;
   return <Component {...rest} />;
 }
@@ -32,6 +33,9 @@ function App() {
             <Route path="/" component={() => <Redirect to="/tip-entry" />} />
             <Route path="/dashboard" component={() => (
               <PrivateRoute component={Dashboard} requireAdmin={true} />
+            )} />
+            <Route path="/employees" component={() => (
+              <PrivateRoute component={EmployeeManagement} requireAdmin={true} />
             )} />
             <Route path="/tip-entry" component={() => (
               <PrivateRoute component={TipEntry} />

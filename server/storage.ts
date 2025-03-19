@@ -14,6 +14,8 @@ export interface IStorage {
   // Employee operations
   getAllEmployees(): Promise<Employee[]>;
   getActiveEmployees(): Promise<Employee[]>;
+  createEmployee(employee: { name: string; isActive: boolean }): Promise<Employee>;
+  updateEmployee(id: number, updates: { isActive: boolean }): Promise<Employee>;
 
   // Tip operations
   createTip(tip: InsertTip): Promise<Tip>;
@@ -68,6 +70,21 @@ export class DatabaseStorage implements IStorage {
   async getActiveEmployees(): Promise<Employee[]> {
     return db.select().from(employees).where(eq(employees.isActive, true));
   }
+
+  async createEmployee(employee: { name: string; isActive: boolean }): Promise<Employee> {
+    const [newEmployee] = await db.insert(employees).values(employee).returning();
+    return newEmployee;
+  }
+
+  async updateEmployee(id: number, updates: { isActive: boolean }): Promise<Employee> {
+    const [updatedEmployee] = await db
+      .update(employees)
+      .set(updates)
+      .where(eq(employees.id, id))
+      .returning();
+    return updatedEmployee;
+  }
+
 
   // Updated tip methods
   async createTip(insertTip: InsertTip): Promise<Tip> {

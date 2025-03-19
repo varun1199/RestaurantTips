@@ -16,9 +16,16 @@ export function Header() {
 
         {user && (
           <nav className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <a className="hover:text-accent-foreground">Dashboard</a>
-            </Link>
+            {user.isAdmin && (
+              <>
+                <Link href="/dashboard">
+                  <a className="hover:text-accent-foreground">Dashboard</a>
+                </Link>
+                <Link href="/employees">
+                  <a className="hover:text-accent-foreground">Employees</a>
+                </Link>
+              </>
+            )}
             <Link href="/tip-entry">
               <a className="hover:text-accent-foreground">Tips</a>
             </Link>
