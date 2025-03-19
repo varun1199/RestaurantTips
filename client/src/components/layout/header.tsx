@@ -10,11 +10,6 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/">
           <a className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-            <img 
-              src="/assets/Screenshot 2025-03-06 222720.png" 
-              alt="Yeti Tips & Till Logo" 
-              className="h-12 w-auto object-contain"
-            />
             <span className="text-xl font-bold">Yeti Tips & Till</span>
           </a>
         </Link>
