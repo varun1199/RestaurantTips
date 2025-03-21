@@ -26,7 +26,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8 max-w-screen-xl">
           <Switch>
             <Route path="/login" component={Login} />
             <Route path="/register" component={Register} />

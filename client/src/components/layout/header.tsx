@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { useAuth, logout } from "@/lib/auth";
 import { Link } from "wouter";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 
 export function Header() {
   const { user } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <header className="bg-primary text-primary-foreground shadow-md">
@@ -15,30 +18,65 @@ export function Header() {
         </Link>
 
         {user && (
-          <nav className="flex items-center gap-4">
-            {user.isAdmin && (
-              <>
-                <Link href="/dashboard">
-                  <a className="hover:text-accent-foreground">Dashboard</a>
-                </Link>
-                <Link href="/employees">
-                  <a className="hover:text-accent-foreground">Employees</a>
-                </Link>
-              </>
-            )}
-            <Link href="/tip-entry">
-              <a className="hover:text-accent-foreground">Tips</a>
-            </Link>
-            <Link href="/till-calculator">
-              <a className="hover:text-accent-foreground">Till</a>
-            </Link>
-            <Button 
-              variant="secondary" 
-              onClick={() => logout()}
+          <>
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              Logout
-            </Button>
-          </nav>
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+
+            {/* Navigation Links */}
+            <nav className={`
+              ${isMenuOpen ? 'flex' : 'hidden'} 
+              md:flex items-center gap-4
+              absolute md:relative
+              top-full left-0 right-0
+              md:top-auto md:left-auto md:right-auto
+              flex-col md:flex-row
+              bg-primary md:bg-transparent
+              p-4 md:p-0
+              shadow-md md:shadow-none
+              z-50
+            `}>
+              {user.isAdmin && (
+                <>
+                  <Link href="/dashboard">
+                    <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
+                      Dashboard
+                    </a>
+                  </Link>
+                  <Link href="/employees">
+                    <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
+                      Employees
+                    </a>
+                  </Link>
+                </>
+              )}
+              <Link href="/tip-entry">
+                <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
+                  Tips
+                </a>
+              </Link>
+              <Link href="/till-calculator">
+                <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
+                  Till
+                </a>
+              </Link>
+              <Button 
+                variant="secondary" 
+                onClick={() => logout()}
+                className="w-full md:w-auto mt-2 md:mt-0"
+              >
+                Logout
+              </Button>
+            </nav>
+          </>
         )}
       </div>
     </header>
