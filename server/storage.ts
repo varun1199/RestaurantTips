@@ -86,16 +86,14 @@ export class DatabaseStorage implements IStorage {
   }
 
 
-  // Updated tip methods
   async createTip(insertTip: InsertTip): Promise<Tip> {
     const { distributions, employeeIds, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
-      // Parse the date string into year, month, day
+      // Parse the date string into year, month, day and create a UTC date
+      // that preserves the local date selection
       const [year, month, day] = tipData.date.split('-').map(Number);
-
-      // Create a date object for the selected date at start of day UTC
-      const tipDate = new Date(Date.UTC(year, month - 1, day));
+      const tipDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 
       // Insert the tip
       const [tip] = await tx.insert(tips).values({
@@ -124,11 +122,10 @@ export class DatabaseStorage implements IStorage {
     const { distributions, employeeIds, ...tipData } = insertTip;
 
     return await db.transaction(async (tx) => {
-      // Parse the date string into year, month, day
+      // Parse the date string into year, month, day and create a UTC date
+      // that preserves the local date selection
       const [year, month, day] = tipData.date.split('-').map(Number);
-
-      // Create a date object for the selected date at start of day UTC
-      const tipDate = new Date(Date.UTC(year, month - 1, day));
+      const tipDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
 
       // Update the tip
       const [tip] = await tx
