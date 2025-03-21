@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { exportTipsToCSV } from "@/lib/csv";
-import { format, subDays, parseISO } from "date-fns";
+import { format, subDays, parseISO, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import type { Tip, Employee } from "@shared/schema";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -39,11 +39,8 @@ export default function Dashboard() {
 
   const handleExport = (values: z.infer<typeof dateRangeSchema>) => {
     if (!tips) return;
-
-    // Parse the dates and ensure proper handling of start and end times
     const startDate = parseISO(values.startDate);
     const endDate = parseISO(values.endDate);
-
     exportTipsToCSV(tips, startDate, endDate);
     setIsExportDialogOpen(false);
   };
@@ -51,6 +48,20 @@ export default function Dashboard() {
   if (isLoading) {
     return <div>Loading...</div>;
   }
+
+  // Calculate last 7 days tips
+  const sevenDaysAgo = subDays(new Date(), 7);
+  const last7DaysTips = tips.filter(tip => {
+    const tipDate = new Date(tip.date);
+    return isWithinInterval(tipDate, {
+      start: startOfDay(sevenDaysAgo),
+      end: endOfDay(new Date())
+    });
+  });
+
+  const avgTipsLast7Days = last7DaysTips.length > 0
+    ? last7DaysTips.reduce((sum, tip) => sum + Number(tip.amount), 0) / last7DaysTips.length
+    : 0;
 
   const chartData = tips?.map(tip => ({
     date: format(new Date(tip.date), "MMM d"),
@@ -106,7 +117,7 @@ export default function Dashboard() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Total Tips</CardTitle>
@@ -122,6 +133,15 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">${avgTipsPerDay.toFixed(2)}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Last 7 Days Average</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">${avgTipsLast7Days.toFixed(2)}</p>
           </CardContent>
         </Card>
       </div>
