@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useLocation, Link } from "wouter";
 import { z } from "zod";
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -107,6 +108,8 @@ export default function Login() {
     }
   }
 
+  const currentUrl = window.location.origin;
+
   return (
     <div className="flex items-center justify-center min-h-[80vh]">
       <Card className="w-full max-w-md">
@@ -114,6 +117,14 @@ export default function Login() {
           <CardTitle>Login</CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-col items-center mb-6">
+            <p className="text-sm text-muted-foreground mb-2">
+              Scan to open on your phone
+            </p>
+            <div className="bg-white p-4 rounded-lg">
+              <QRCodeSVG value={currentUrl} size={150} />
+            </div>
+          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -168,8 +179,8 @@ export default function Login() {
                         <FormControl>
                           <div className="flex gap-2">
                             <Input {...field} placeholder="Enter your Employee ID" />
-                            <Button 
-                              type="button" 
+                            <Button
+                              type="button"
                               variant="outline"
                               onClick={() => fetchSecurityQuestion(field.value)}
                               disabled={!field.value}
@@ -225,8 +236,8 @@ export default function Login() {
                       />
                     </>
                   )}
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="w-full"
                     disabled={!securityQuestion}
                   >
