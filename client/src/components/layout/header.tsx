@@ -23,6 +23,7 @@ export function Header() {
             <button 
               className="md:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -43,6 +44,7 @@ export function Header() {
               p-4 md:p-0
               shadow-md md:shadow-none
               z-50
+              w-full md:w-auto
             `}>
               {user.isAdmin && (
                 <>
@@ -66,6 +68,11 @@ export function Header() {
               <Link href="/till-calculator">
                 <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
                   Till
+                </a>
+              </Link>
+              <Link href="/profile">
+                <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
+                  Profile
                 </a>
               </Link>
               <Button 
