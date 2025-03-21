@@ -1,4 +1,4 @@
-import { users, tips, tills, employees, tipEmployees, type User, type InsertUser, type Tip, type InsertTip, type Till, type InsertTill, type Employee } from "@shared/schema";
+import { users, tips, tills, employees, tipEmployees, type User, type InsertUser, type Tip, type InsertTip, type Till, type Employee } from "@shared/schema";
 import { db } from "./db";
 import { eq, gte, lte, and } from "drizzle-orm";
 
@@ -162,9 +162,9 @@ export class DatabaseStorage implements IStorage {
 
   async getTipsByDate(date: Date): Promise<Tip[]> {
     const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     return db.select().from(tips)
       .where(and(gte(tips.date, startOfDay), lte(tips.date, endOfDay)));
