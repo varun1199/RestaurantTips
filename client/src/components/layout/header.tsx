@@ -36,15 +36,16 @@ export function Header() {
             <nav className={`
               ${isMenuOpen ? 'flex' : 'hidden'} 
               md:flex items-center gap-4
-              absolute md:relative
-              top-full left-0 right-0
-              md:top-auto md:left-auto md:right-auto
+              fixed md:relative
+              top-[64px] md:top-auto
+              left-0 right-0
               flex-col md:flex-row
               bg-primary md:bg-transparent
               p-4 md:p-0
               shadow-md md:shadow-none
               z-50
               w-full md:w-auto
+              border-t border-primary-foreground/10 md:border-none
             `}>
               {user.isAdmin && (
                 <>
