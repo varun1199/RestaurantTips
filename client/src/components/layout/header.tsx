@@ -8,6 +8,23 @@ export function Header() {
   const { user } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Function to close the menu
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
+  // Custom NavLink component that closes the menu on click
+  const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <Link href={href}>
+      <a 
+        className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0"
+        onClick={closeMenu}
+      >
+        {children}
+      </a>
+    </Link>
+  );
+
   return (
     <header className="bg-primary text-primary-foreground shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -49,36 +66,29 @@ export function Header() {
             `}>
               {user.isAdmin && (
                 <>
-                  <Link href="/dashboard">
-                    <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
-                      Dashboard
-                    </a>
-                  </Link>
-                  <Link href="/employees">
-                    <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
-                      Employees
-                    </a>
-                  </Link>
+                  <NavLink href="/dashboard">
+                    Dashboard
+                  </NavLink>
+                  <NavLink href="/employees">
+                    Employees
+                  </NavLink>
                 </>
               )}
-              <Link href="/tip-entry">
-                <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
-                  Tips
-                </a>
-              </Link>
-              <Link href="/till-calculator">
-                <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
-                  Till
-                </a>
-              </Link>
-              <Link href="/profile">
-                <a className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0">
-                  Profile
-                </a>
-              </Link>
+              <NavLink href="/tip-entry">
+                Tips
+              </NavLink>
+              <NavLink href="/till-calculator">
+                Till
+              </NavLink>
+              <NavLink href="/profile">
+                Profile
+              </NavLink>
               <Button 
                 variant="secondary" 
-                onClick={() => logout()}
+                onClick={() => {
+                  closeMenu();
+                  logout();
+                }}
                 className="w-full md:w-auto mt-2 md:mt-0"
               >
                 Logout
