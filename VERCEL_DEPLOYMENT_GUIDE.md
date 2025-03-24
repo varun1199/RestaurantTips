@@ -99,35 +99,41 @@ If you see a "This Serverless Function Has Crashed" error:
 
 5. **Handling FUNCTION_INVOCATION_FAILED Errors**: For persistent server function crashes:
 
-   ### Progressive Problem-Solving Approach:
+   ### Progressive Deployment Approach:
    
-   **Step 1: Use Static Maintenance Mode**
+   **Step 1: Use Static Maintenance Mode (COMPLETE)**
    - We've created a static landing page in `api/app.js` with:
      - No dependencies or database connections
      - Pure static HTML content
      - No error-prone JS logic
-   - Update the `vercel.json` routes to point to this static page first
-   - Once this deploys successfully, you know your basic setup works
+   - The `vercel.json` routes point to this static page first
+   - Deployment confirms your basic setup works
    
-   **Step 2: Fix Module Format Issues**
-   - Use ES module syntax in all API files:
-     ```javascript
-     // Use this format for all .js files:
-     export default function handler(req, res) {
-       // Non-async simpler functions 
-       res.status(200).send('Hello!');
-     }
-     ```
-   - Remove unnecessary `async/await` if not needed
-   - This matches the `"type": "module"` setting in package.json
+   **Step 2: Add API Diagnostics (COMPLETE)**
+   - Fixed module format issues using ES module syntax
+   - Added `/status` endpoint for environment diagnostics
+   - Created `/api` endpoint with API documentation
+   - Added `/api/hello` health check endpoint
+   - All these endpoints should be operational
    
-   **Step 3: Add Diagnostic Endpoints**
-   - Add `/status` endpoint to report environment details
-   - Use these diagnostic endpoints to verify system health
+   **Step 3: Database Configuration (NEXT)**
+   - Add the DATABASE_URL environment variable in Vercel:
+     1. Go to your Vercel project dashboard
+     2. Navigate to Settings > Environment Variables
+     3. Add `DATABASE_URL` with your PostgreSQL connection string
+     4. Set `SESSION_SECRET` with a strong random string
+     5. Set `MAINTENANCE_MODE=false` to enable transitional features
+   - Deploy after adding these environment variables
+   - Test `/api/db-config` to verify your database is recognized
    
-   **Step 4: Incremental Feature Addition**
-   - Only after basic endpoints work, gradually add back app functionality
-   - Test each addition before moving to the next step
+   **Step 4: Transitional API Mode**
+   - The `/api/adapter.js` provides a bridge to the full application
+   - When `MAINTENANCE_MODE=false`, API endpoints will respond with transitional data
+   - Try endpoints like `/api/auth/status` to check transitional mode
+   
+   **Step 5: Complete Deployment**
+   - Once transitional API works, the static pages can be replaced with the full application
+   - For the next deployment phase, we'll update the routes to serve the full app
    
    ### Additional Troubleshooting Tips:
    
