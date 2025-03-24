@@ -169,27 +169,93 @@ If you receive a "failed to authenticate" error:
 
 ### Repository Name Change Issue
 
-If you've renamed your project from "RestaurantTips" to "YetiTips" but are still trying to push to the old repository, you'll need to update your remote URL to point to the correct repository:
+If you've renamed your project from "RestaurantTips" to "YetiTips" but are still experiencing authentication failures, follow these detailed steps to resolve the issue:
 
-```bash
-# For HTTPS (with PAT)
-git remote set-url origin https://USERNAME:TOKEN@github.com/varun1199/YetiTips.git
+#### If You Renamed the Repository on GitHub:
 
-# For SSH
-git remote set-url origin git@github.com:varun1199/YetiTips.git
-```
+1. **Update your local Git configuration:**
+   ```bash
+   # Check current remote settings
+   git remote -v
+   
+   # Update the remote URL to match the exact name on GitHub (case-sensitive)
+   # For HTTPS (with PAT)
+   git remote set-url origin https://USERNAME:TOKEN@github.com/varun1199/YetiTips.git
+   
+   # For SSH
+   git remote set-url origin git@github.com:varun1199/YetiTips.git
+   ```
 
-If you've created a new repository for YetiTips:
+2. **Reset your credentials if you're still facing issues:**
+   ```bash
+   # Clear any cached credentials
+   git config --global --unset credential.helper
+   
+   # For Windows
+   git config --global credential.helper wincred
+   
+   # For macOS
+   git config --global credential.helper osxkeychain
+   
+   # For Linux
+   git config --global credential.helper cache
+   ```
+
+3. **Verify branch names match:**
+   ```bash
+   # List all local branches
+   git branch
+   
+   # If your default branch changed (e.g., from master to main)
+   git checkout main  # Switch to match GitHub's branch name
+   ```
+
+4. **Force a connection test:**
+   ```bash
+   # For HTTPS
+   git ls-remote https://github.com/varun1199/YetiTips.git
+   
+   # For SSH
+   ssh -T git@github.com
+   ```
+
+#### If You Created a New Repository for YetiTips:
 
 1. Create the new repository on GitHub without initializing it
-2. Change your local repository's remote URL:
+2. Set up your local repository to point to the new remote:
    ```bash
-   git remote set-url origin https://github.com/varun1199/YetiTips.git
-   ```
-3. Push your code to the new repository:
-   ```bash
+   # Initialize Git if not already done
+   git init
+   
+   # Add all files
+   git add .
+   
+   # Commit changes
+   git commit -m "Initial commit for Yeti Tips"
+   
+   # Add the new remote
+   git remote add origin https://github.com/varun1199/YetiTips.git
+   # OR with credentials
+   git remote add origin https://USERNAME:TOKEN@github.com/varun1199/YetiTips.git
+   
+   # Push your code
    git push -u origin main
    ```
+
+#### Common Errors During Repository Name Changes:
+
+1. **"Repository not found"** - This usually means:
+   - The repository name is incorrect (remember GitHub is case-sensitive)
+   - You don't have access to the repository
+   - The repository was deleted or made private
+   
+   Solution: Double-check the exact repository name on GitHub and your access permissions
+
+2. **"Failed to authenticate"** after repository rename:
+   - GitHub may need time to propagate the name change
+   - Your cached credentials might be for the old repository
+   
+   Solution: Wait a few minutes, clear your credentials, and try again with the updated URL
 
 ### Still Having Issues?
 

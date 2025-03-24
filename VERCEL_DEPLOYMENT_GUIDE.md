@@ -105,8 +105,21 @@ If you see a "This Serverless Function Has Crashed" error:
      - Plain text responses instead of JSON
      - Async/await pattern for better handling
      - Simplified vercel.json without unnecessary settings
+     - ES module syntax using `export default function handler(req, res) {}`
    
-   - If you're still seeing the error after deployment:
+   - **Fix for "module is not defined in ES module scope" Error**:
+     - This error appears when using CommonJS syntax (`module.exports`) but Vercel is interpreting files as ES modules
+     - All `.js` files in the API folder should use ES module syntax:
+       ```javascript
+       // Instead of this (CommonJS):
+       module.exports = async (req, res) => { ... }
+       
+       // Use this (ES modules):
+       export default async function handler(req, res) { ... }
+       ```
+     - This is required because the package.json likely has `"type": "module"` set
+   
+   - If you're still seeing other errors after fixing module syntax:
      - Check the function logs at your-vercel-domain.com/_logs
      - Try creating a brand new project in Vercel instead of updating the existing one
      - Make sure you don't have conflicting environment variables
