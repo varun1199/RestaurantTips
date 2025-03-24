@@ -16,12 +16,12 @@ export function Header() {
   // Custom NavLink component that closes the menu on click
   const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
     <Link href={href}>
-      <a 
-        className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0"
+      <div 
+        className="hover:text-accent-foreground w-full md:w-auto text-center py-2 md:py-0 cursor-pointer"
         onClick={closeMenu}
       >
         {children}
-      </a>
+      </div>
     </Link>
   );
 
@@ -29,9 +29,9 @@ export function Header() {
     <header className="bg-primary text-primary-foreground shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/">
-          <a className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <div className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer">
             <span className="text-xl font-bold">Yeti Tips & Till</span>
-          </a>
+          </div>
         </Link>
 
         {user && (

@@ -103,7 +103,7 @@ export default function Dashboard() {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Date</FormLabel>
+                      <div className="text-sm font-medium leading-none">Start Date</div>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -115,7 +115,7 @@ export default function Dashboard() {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Date</FormLabel>
+                      <div className="text-sm font-medium leading-none">End Date</div>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
