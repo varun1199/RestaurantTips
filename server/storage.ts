@@ -1,4 +1,4 @@
-import { users, tips, tills, employees, tipEmployees, type User, type InsertUser, type Tip, type InsertTip, type Till, type Employee } from "@shared/schema";
+import { users, tips, tills, employees, tipEmployees, type User, type InsertUser, type Tip, type InsertTip, type Till, type InsertTill, type Employee } from "@shared/schema";
 import { db } from "./db";
 import { eq, gte, lte, and } from "drizzle-orm";
 
@@ -9,6 +9,7 @@ export interface IStorage {
   getUserById(id: number): Promise<User | undefined>;
   getUserByEmployeeId(employeeId: string): Promise<User | undefined>;
   updateUserPassword(id: number, newPassword: string): Promise<void>;
+  updateUserProfile(id: number, updates: { username: string; email?: string }): Promise<User>;
   getAllUsers(): Promise<User[]>;  // Added this method
 
   // Employee operations
@@ -56,6 +57,15 @@ export class DatabaseStorage implements IStorage {
     await db.update(users)
       .set({ password: newPassword })
       .where(eq(users.id, id));
+  }
+
+  async updateUserProfile(id: number, updates: { username: string; email?: string }): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 
   async getAllUsers(): Promise<User[]> {
