@@ -97,17 +97,23 @@ If you see a "This Serverless Function Has Crashed" error:
    - Re-add the GitHub integration
    - Deploy with a fresh build
 
-5. **Try the ultra-minimal version**: For persistent server function crashes:
-   - We've created ultra-minimal versions of all API handlers that have:
+5. **Handling FUNCTION_INVOCATION_FAILED Errors**: For persistent server function crashes:
+   - We've created ultra-minimal versions of all API handlers with these characteristics:
      - No dependencies
-     - Absolute minimal code (a few lines only)
-     - Simple routing in vercel.json
-   - This extremely minimal approach helps isolate whether the issue is with:
-     - The Node.js runtime
-     - Dependency conflicts
-     - Configuration problems
-     - Memory limitations
-   - Once this minimal version works, gradually add back functionality
+     - Bare-minimum code (just a few lines)
+     - Explicit error handling with try/catch blocks
+     - Plain text responses instead of JSON
+     - Async/await pattern for better handling
+     - Simplified vercel.json without unnecessary settings
+   
+   - If you're still seeing the error after deployment:
+     - Check the function logs at your-vercel-domain.com/_logs
+     - Try creating a brand new project in Vercel instead of updating the existing one
+     - Make sure you don't have conflicting environment variables
+     - Try a different Node.js version in Vercel project settings (14, 16, or 18)
+     - Consider Vercel's serverless function size limits (50MB max)
+   
+   - Once a minimal version works, gradually add back functionality one piece at a time
 
 5. **Update environment variables**: Make sure your DATABASE_URL and other required environment variables are correctly set in the Vercel dashboard.
 
