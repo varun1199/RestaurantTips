@@ -51,7 +51,40 @@ GitHub no longer allows password authentication for Git operations. You have two
 
 ## Troubleshooting
 
+### Authentication Errors
+
 If you receive a "failed to authenticate" error:
-- Double-check that your token has the correct permissions
-- Ensure you've formatted the remote URL correctly
-- Try regenerating your token or SSH key
+
+- **For Personal Access Token (PAT) users:**
+  - Verify your token hasn't expired (GitHub tokens can expire)
+  - Ensure your token has the "repo" scope permission
+  - Check that your remote URL is formatted correctly with your username and token
+  - Try regenerating a new token and updating your remote URL
+
+- **For SSH Key users:**
+  - Verify your SSH key is added to your GitHub account
+  - Check that your SSH agent is running: `eval "$(ssh-agent -s)"`
+  - Add your key to the SSH agent: `ssh-add ~/.ssh/id_ed25519`
+  - Test your SSH connection: `ssh -T git@github.com`
+
+### Common Error Messages
+
+1. **"Authentication failed for 'https://github.com/varun1199/RestaurantTips.git/'"**
+   - Solution: Use a personal access token or SSH key as described above.
+
+2. **"Permission denied (publickey)"**
+   - Solution: Your SSH key is not properly set up. Follow the SSH key steps again.
+
+3. **"remote: Repository not found"** 
+   - Solution: Verify the repository name and your access permissions. Make sure you're a collaborator on the repository.
+
+4. **"fatal: could not read from remote repository"**
+   - Solution: Check your internet connection and firewall settings. Some networks block Git operations.
+
+### Still Having Issues?
+
+If you've tried all of the above and still can't push to GitHub:
+
+1. Try using the GitHub Desktop application, which handles authentication automatically
+2. Contact GitHub Support for assistance
+3. Use the GitHub web interface to manually upload files as a temporary solution
