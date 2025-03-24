@@ -1,118 +1,72 @@
 # Vercel Deployment Guide for Yeti Tips & Till
 
-This guide will help you properly deploy your Yeti Tips & Till application to Vercel.
+This guide will help you deploy the Yeti Tips & Till application on Vercel.
 
 ## Prerequisites
 
-- A Vercel account (sign up at [vercel.com](https://vercel.com))
-- Your project code pushed to GitHub
-- A PostgreSQL database (Vercel doesn't provide this; use a service like Neon, Supabase, or Railway)
-
-## Important Configuration Files
-
-Before deploying, make sure you have:
-
-1. **vercel.json** - This file is crucial for Vercel to correctly build and serve your application.
-2. **package.json** - With proper build and start scripts.
+1. A Vercel account (sign up at [vercel.com](https://vercel.com))
+2. Your project pushed to GitHub (see GITHUB_UPLOAD_GUIDE.md)
 
 ## Deployment Steps
 
-1. **Prepare Your Database:**
-   - Set up a PostgreSQL database with a service like [Neon](https://neon.tech) or [Supabase](https://supabase.com)
-   - Get your database connection string in the format: `postgresql://username:password@hostname:port/database`
+### 1. Connect Your GitHub Repository
 
-2. **Connect to GitHub:**
-   - Log in to your Vercel account
-   - Click "Add New..." → "Project"
-   - Select your GitHub repository (RestaurantTips)
-   - Click "Import"
+1. Log in to your Vercel account
+2. Click on "New Project"
+3. Select your GitHub repository (Yeti Tips & Till)
+4. Click "Import"
 
-3. **Configure Project:**
-   - **Project Name:** Enter a name for your project (e.g., "yeti-tips-till")
-   - **Framework Preset:** Select "Other" 
-   - **Root Directory:** Keep as `.` (the project root)
-   - **Build and Output Settings:**
-     - Build Command: `npm run build`
-     - Output Directory: `dist`
-     - Install Command: `npm install`
-     - Development Command: `npm run dev`
+### 2. Configure Project Settings
 
-4. **Environment Variables:**
-   - Scroll down to "Environment Variables"
-   - Add the following variables:
-     - `DATABASE_URL`: Your PostgreSQL database URL (from step 1)
-     - `SESSION_SECRET`: A long, random string for session encryption (e.g., generate with `openssl rand -hex 32`)
-     - `NODE_ENV`: Set to `production`
+When configuring your project in Vercel, use these settings:
 
-5. **Deploy:**
-   - Click "Deploy"
-   - Wait for the build and deployment to complete
+- **Framework Preset**: Other
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Install Command**: `npm install`
 
-## Fixing Build Failures and Source Code Display Issues
+### 3. Environment Variables
 
-If you see a build error like "The pattern 'api/**/*.js' defined in 'functions' doesn't match any Serverless Functions", or if source code is displayed:
+Add the following environment variables:
 
-1. **Use the corrected vercel.json:**
-   ```json
-   {
-     "version": 2,
-     "buildCommand": "npm run build",
-     "devCommand": "npm run dev",
-     "outputDirectory": "dist",
-     "routes": [
-       { "src": "/api", "dest": "/api/index.js" },
-       { "src": "/(.*)", "dest": "/index.html" }
-     ],
-     "env": {
-       "NODE_ENV": "production"
-     }
-   }
-   ```
+- `DATABASE_URL`: Your PostgreSQL database URL (required)
+- `SESSION_SECRET`: A secure random string for session encryption
+- `NODE_ENV`: Set to `production`
 
-2. **Check build settings:**
-   - Make sure your build generates both frontend and backend code properly
-   - Verify the output goes to the correct `dist` directory
+### 4. Deploy the Project
 
-3. **Redeploy:**
-   - After making changes, commit and push them to GitHub
-   - In Vercel, go to your project and click "Redeploy" in the "..." menu
+Click on "Deploy" and wait for the deployment to complete.
 
-## Troubleshooting
+### 5. Troubleshooting Common Issues
 
-### Common Issues:
+If you encounter issues with your deployment, check the following:
 
-1. **Build Failures:**
-   - Check the build logs in Vercel dashboard
-   - Common causes: missing dependencies, build script errors
+#### API Routes Not Working
 
-2. **Database Connection Issues:**
-   - Ensure your `DATABASE_URL` is correct and the database is publicly accessible
-   - Check if your database provider has IP restrictions that might block Vercel
+Ensure the `api` directory is properly included in your deployment. The project includes:
+- `api/index.js` - Main API handler
+- `api/hello.js` - Test endpoint
 
-3. **API Routes Not Working:**
-   - Verify the API routes are properly set up in vercel.json
-   - Check server-side code for hard-coded URLs or ports
+#### Database Connection Issues
 
-4. **Session Issues:**
-   - Serverless functions work differently than traditional servers
-   - You may need to configure session storage to use a database instead of memory
+- Verify your `DATABASE_URL` is correctly set in environment variables
+- Make sure your database allows connections from Vercel's IP addresses
 
-## Important Notes
+#### Seeing Source Code Instead of Running App
 
-1. **Database Migration:**
-   - Run `npm run db:push` before deployment to ensure your schema is up to date
-   - For future updates, always run migrations before deploying code changes
+If you see source code displayed instead of your running application:
+1. Make sure `vercel.json` configuration is properly set up
+2. Verify the routes are correctly configured
+3. Check that the build process completed successfully
 
-2. **Session Store:**
-   - For production, consider switching from memory store to a database-backed session store
-   - Update your session configuration in server code
+## Post-Deployment
 
-3. **Logs and Monitoring:**
-   - Use Vercel's logging features to debug issues
-   - Consider adding more detailed logging to your application
+After successful deployment:
 
-## Need Help?
+1. Your app will be available at `your-project-name.vercel.app`
+2. Test all functionality to ensure everything works in the production environment
+3. Set up your custom domain if needed (in Vercel project settings)
 
-- [Vercel Documentation](https://vercel.com/docs)
-- [Vercel Serverless Functions](https://vercel.com/docs/concepts/functions/serverless-functions)
-- [Vercel Support](https://vercel.com/help)
+## Keeping Deployments Updated
+
+Any new commits pushed to the main branch of your connected GitHub repository will automatically trigger a new deployment.

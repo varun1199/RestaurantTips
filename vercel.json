@@ -5,7 +5,14 @@
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/dist/index.html" }
-  ]
+    { "src": "/api", "dest": "/api/adapter.js" },
+    { "src": "/api/(.*)", "dest": "/api/adapter.js" },
+    { "src": "/static", "dest": "/api/static.js" },
+    { "src": "/assets/(.*)", "dest": "/dist/assets/$1" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/api/static.js" }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
