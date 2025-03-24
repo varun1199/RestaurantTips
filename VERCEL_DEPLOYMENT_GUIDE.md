@@ -48,26 +48,21 @@ Before deploying, make sure you have:
    - Click "Deploy"
    - Wait for the build and deployment to complete
 
-## Fixing Source Code Display Issue
+## Fixing Build Failures and Source Code Display Issues
 
-If you see your source code displayed instead of your application running:
+If you see a build error like "The pattern 'api/**/*.js' defined in 'functions' doesn't match any Serverless Functions", or if source code is displayed:
 
-1. **Double-check vercel.json:**
+1. **Use the corrected vercel.json:**
    ```json
    {
      "version": 2,
      "buildCommand": "npm run build",
      "devCommand": "npm run dev",
      "outputDirectory": "dist",
-     "rewrites": [
-       { "source": "/api/(.*)", "destination": "/api/$1" },
-       { "source": "/(.*)", "destination": "/index.html" }
+     "routes": [
+       { "src": "/api", "dest": "/api/index.js" },
+       { "src": "/(.*)", "dest": "/index.html" }
      ],
-     "functions": {
-       "api/**/*.js": {
-         "memory": 1024
-       }
-     },
      "env": {
        "NODE_ENV": "production"
      }

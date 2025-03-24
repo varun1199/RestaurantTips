@@ -3,15 +3,10 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/api", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
-  "functions": {
-    "api/**/*.js": {
-      "memory": 1024
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   }
