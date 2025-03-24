@@ -28,6 +28,12 @@ A comprehensive restaurant tip management web application that simplifies tip di
 - Node.js (v16 or higher)
 - PostgreSQL database
 
+### Security Notes
+
+- **Important**: This project currently uses plain text password storage for demonstration purposes.
+- For production use, implement password hashing using bcrypt or a similar library.
+- Update the session secret in the .env file with a strong random string.
+
 ### Installation
 
 1. Clone the repository
