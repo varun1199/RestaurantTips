@@ -28,6 +28,8 @@ export default function Dashboard() {
   });
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [graphStartDate, setGraphStartDate] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
+  const [graphEndDate, setGraphEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
   const exportForm = useForm<z.infer<typeof dateRangeSchema>>({
     resolver: zodResolver(dateRangeSchema),
@@ -49,6 +51,19 @@ export default function Dashboard() {
     return <div>Loading...</div>;
   }
 
+  // Filter tips based on selected date range for graph
+  const filteredTips = tips.filter(tip => {
+    const tipDate = new Date(tip.date);
+    return isWithinInterval(tipDate, {
+      start: startOfDay(parseISO(graphStartDate)),
+      end: endOfDay(parseISO(graphEndDate))
+    });
+  });
+
+  // Calculate statistics for filtered data
+  const totalFilteredTips = filteredTips.reduce((sum, tip) => sum + Number(tip.amount), 0);
+  const avgFilteredTips = totalFilteredTips / (filteredTips.length || 1);
+
   // Calculate last 7 days tips
   const sevenDaysAgo = subDays(new Date(), 7);
   const last7DaysTips = tips.filter(tip => {
@@ -63,14 +78,11 @@ export default function Dashboard() {
     ? last7DaysTips.reduce((sum, tip) => sum + Number(tip.amount), 0) / last7DaysTips.length
     : 0;
 
-  const chartData = tips?.map(tip => ({
+  const chartData = filteredTips.map(tip => ({
     date: format(new Date(tip.date), "MMM d"),
     amount: Number(tip.amount),
     perEmployee: Number(tip.amount) / tip.employees.length
   }));
-
-  const totalTips = tips?.reduce((sum, tip) => sum + Number(tip.amount), 0) || 0;
-  const avgTipsPerDay = totalTips / (tips?.length || 1);
 
   return (
     <div className="space-y-6">
@@ -123,7 +135,7 @@ export default function Dashboard() {
             <CardTitle>Total Tips</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${totalTips.toFixed(2)}</p>
+            <p className="text-2xl font-bold">${totalFilteredTips.toFixed(2)}</p>
           </CardContent>
         </Card>
 
@@ -132,7 +144,7 @@ export default function Dashboard() {
             <CardTitle>Average Tips per Day</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${avgTipsPerDay.toFixed(2)}</p>
+            <p className="text-2xl font-bold">${avgFilteredTips.toFixed(2)}</p>
           </CardContent>
         </Card>
 
@@ -148,7 +160,29 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Tips Over Time</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Tips Over Time</CardTitle>
+            <div className="flex gap-4 items-center">
+              <div>
+                <FormLabel>From</FormLabel>
+                <Input
+                  type="date"
+                  value={graphStartDate}
+                  onChange={(e) => setGraphStartDate(e.target.value)}
+                  className="w-auto"
+                />
+              </div>
+              <div>
+                <FormLabel>To</FormLabel>
+                <Input
+                  type="date"
+                  value={graphEndDate}
+                  onChange={(e) => setGraphEndDate(e.target.value)}
+                  className="w-auto"
+                />
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
