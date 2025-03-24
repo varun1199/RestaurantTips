@@ -70,9 +70,20 @@ Make sure all these files are pushed to your GitHub repository and included in y
 
 If you see a "This Serverless Function Has Crashed" error:
 
-1. **Check the vercel.json routes**: Make sure your routes are properly configured to point to the correct serverless functions. The most common issue is routes pointing to non-existent functions or paths.
+1. **Use the ultra-simplified serverless functions**: We've created extremely minimal versions of all API handlers that don't use any dependencies. This approach eliminates most common causes of serverless function failures:
+   - `api/index.js` - Bare minimum handler with no dependencies
+   - `api/adapter.js` - Simplified handler for authentication endpoints
+   - `api/static.js` - Minimal static HTML page
+   - `api/hello.js` - Simple test endpoint
 
-2. **Simplify the serverless functions**: Our updated approach uses a simplified `api/index.js` file that doesn't depend on finding built files. This should resolve most FUNCTION_INVOCATION_FAILED errors.
+2. **Check the vercel.json routes**: Make sure your routes are properly configured to point to the correct serverless functions:
+   ```json
+   "routes": [
+     { "src": "/api", "dest": "/api/index.js" },
+     { "src": "/api/(.*)", "dest": "/api/index.js" },
+     { "src": "/(.*)", "dest": "/api/static.js" }
+   ]
+   ```
 
 3. **Review function logs**: In the Vercel dashboard:
    - Navigate to your deployment
@@ -80,7 +91,27 @@ If you see a "This Serverless Function Has Crashed" error:
    - Select the function that's crashing
    - Check the logs for specific error messages
 
-4. **Update environment variables**: Make sure your DATABASE_URL and other required environment variables are correctly set in the Vercel dashboard.
+4. **Force a clean deployment**: Try these steps:
+   - Delete any previous deployments in Vercel
+   - Remove the Vercel integration from GitHub
+   - Re-add the GitHub integration
+   - Deploy with a fresh build
+
+5. **Update environment variables**: Make sure your DATABASE_URL and other required environment variables are correctly set in the Vercel dashboard.
+
+6. **Try a direct Vercel deployment**: If GitHub deployment continues to fail, try the Vercel CLI approach:
+   ```bash
+   # Install Vercel CLI
+   npm install -g vercel
+   
+   # Login to Vercel
+   vercel login
+   
+   # Deploy from your project directory
+   vercel
+   ```
+   
+   This bypasses GitHub and deploys directly from your local machine.
 
 #### Database Connection Issues
 
