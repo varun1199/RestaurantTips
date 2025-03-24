@@ -7,7 +7,7 @@
     { "src": "/api/hello", "dest": "/api/hello.js" },
     { "src": "/api", "dest": "/api/index.js" },
     { "src": "/status", "dest": "/api/status.js" },
-    { "src": "/", "dest": "/api/root.js" },
-    { "src": "/(.*)", "dest": "/api/static.js" }
+    { "src": "/", "dest": "/api/app.js" },
+    { "src": "/(.*)", "dest": "/api/app.js" }
   ]
 }

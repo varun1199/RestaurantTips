@@ -1,6 +1,8 @@
-// Bare-bones text response function with no dependencies
+// Simple hello endpoint that works in ES module format
 export default function handler(req, res) {
-  // Simple text response without async
-  res.setHeader('Content-Type', 'text/plain');
-  res.status(200).send('Hello from Yeti Tips & Till!');
+  res.status(200).json({
+    message: "Hello from Yeti Tips & Till!",
+    timestamp: new Date().toISOString(),
+    status: "online"
+  });
 }

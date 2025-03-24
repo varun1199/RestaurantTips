@@ -98,35 +98,47 @@ If you see a "This Serverless Function Has Crashed" error:
    - Deploy with a fresh build
 
 5. **Handling FUNCTION_INVOCATION_FAILED Errors**: For persistent server function crashes:
-   - We've created ultra-minimal versions of all API handlers with these characteristics:
-     - No dependencies
-     - Bare-minimum code (just a few lines)
-     - Explicit error handling with try/catch blocks
-     - Plain text responses instead of JSON
-     - Async/await pattern for better handling
-     - Simplified vercel.json without unnecessary settings
-     - ES module syntax using `export default function handler(req, res) {}`
+
+   ### Progressive Problem-Solving Approach:
    
-   - **Fix for "module is not defined in ES module scope" Error**:
-     - This error appears when using CommonJS syntax (`module.exports`) but Vercel is interpreting files as ES modules
-     - All `.js` files in the API folder should use ES module syntax:
-       ```javascript
-       // Instead of this (CommonJS):
-       module.exports = async (req, res) => { ... }
-       
-       // Use this (ES modules):
-       export default async function handler(req, res) { ... }
-       ```
-     - This is required because the package.json likely has `"type": "module"` set
+   **Step 1: Use Static Maintenance Mode**
+   - We've created a static landing page in `api/app.js` with:
+     - No dependencies or database connections
+     - Pure static HTML content
+     - No error-prone JS logic
+   - Update the `vercel.json` routes to point to this static page first
+   - Once this deploys successfully, you know your basic setup works
    
-   - If you're still seeing other errors after fixing module syntax:
-     - Check the function logs at your-vercel-domain.com/_logs
-     - Try creating a brand new project in Vercel instead of updating the existing one
-     - Make sure you don't have conflicting environment variables
-     - Try a different Node.js version in Vercel project settings (14, 16, or 18)
-     - Consider Vercel's serverless function size limits (50MB max)
+   **Step 2: Fix Module Format Issues**
+   - Use ES module syntax in all API files:
+     ```javascript
+     // Use this format for all .js files:
+     export default function handler(req, res) {
+       // Non-async simpler functions 
+       res.status(200).send('Hello!');
+     }
+     ```
+   - Remove unnecessary `async/await` if not needed
+   - This matches the `"type": "module"` setting in package.json
    
-   - Once a minimal version works, gradually add back functionality one piece at a time
+   **Step 3: Add Diagnostic Endpoints**
+   - Add `/status` endpoint to report environment details
+   - Use these diagnostic endpoints to verify system health
+   
+   **Step 4: Incremental Feature Addition**
+   - Only after basic endpoints work, gradually add back app functionality
+   - Test each addition before moving to the next step
+   
+   ### Additional Troubleshooting Tips:
+   
+   - **Check Logs**: Use the Vercel dashboard and function logs at your-vercel-domain.com/_logs
+   - **Fresh Project**: Try deploying to a brand new Vercel project instead of updating an existing one
+   - **Environment Variables**: Ensure no conflicting or missing environment variables
+   - **Node Version**: Set Node.js version to 18.x in project settings for best compatibility
+   - **Function Size**: Keep handlers small to avoid hitting the 50MB limit
+   - **Browser Cache**: Always hard-refresh (Ctrl+F5) when testing new deployments
+   
+   Once your static page and basic API endpoints work, you can gradually restore the full app.
 
 5. **Update environment variables**: Make sure your DATABASE_URL and other required environment variables are correctly set in the Vercel dashboard.
 
