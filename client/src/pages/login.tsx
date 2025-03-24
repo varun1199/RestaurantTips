@@ -249,8 +249,8 @@ export default function Login() {
           </Dialog>
           <p className="text-sm text-muted-foreground">
             New employee?{" "}
-            <Link href="/register">
-              <a className="text-primary hover:underline">Register here</a>
+            <Link href="/register" className="text-primary hover:underline">
+              Register here
             </Link>
           </p>
         </CardFooter>
