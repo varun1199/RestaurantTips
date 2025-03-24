@@ -26,14 +26,30 @@ export default async function handler(req, res) {
       });
     }
     
-    // If not in maintenance mode, we can attempt to delegate to the actual application
-    // For now, return a simple API feature not enabled response
+    // Check if database is properly configured
+    const hasDbConfig = Boolean(process.env.DATABASE_URL);
+    const isNeonDb = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+    
+    // If not in maintenance mode, we can attempt to handle API requests
+    // For now, return a simple API feature not enabled response with DB status
     res.status(200).json({
       message: 'This API endpoint is ready to be enabled in the next deployment phase',
       endpoint: req.url,
       method: req.method,
       timestamp: new Date().toISOString(),
-      status: 'transitional'
+      status: 'transitional',
+      database: {
+        configured: hasDbConfig,
+        type: isNeonDb ? 'Neon PostgreSQL' : (hasDbConfig ? 'PostgreSQL' : 'none'),
+        status: hasDbConfig ? 'pending connection test' : 'not configured',
+        testEndpoint: '/api/neon-test'
+      },
+      nextSteps: [
+        'Verify DATABASE_URL is set with your Neon connection string',
+        'Set SESSION_SECRET for secure cookie handling',
+        'Test database connectivity with /api/neon-test',
+        'Check Vercel deployment logs for additional details'
+      ]
     });
     
     // In the future, we'll add a dynamic import of the actual Express app here

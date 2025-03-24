@@ -143,8 +143,8 @@ export default function handler(req, res) {
         </tr>
         <tr>
           <td>Database</td>
-          <td><span class="status ${process.env.DATABASE_URL ? 'warning' : 'offline'}">${process.env.DATABASE_URL ? 'Configured' : 'Not Configured'}</span></td>
-          <td>${process.env.DATABASE_URL ? 'Connection status not verified' : 'No database URL configured'}</td>
+          <td><span class="status ${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'warning' : 'warning') : 'offline'}">${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'Neon PostgreSQL' : 'PostgreSQL') : 'Not Configured'}</span></td>
+          <td>${process.env.DATABASE_URL ? 'Connection string detected but status not verified' : 'No database URL configured'} <a href="/api/neon-test" class="button" style="padding: 0.1rem 0.5rem; font-size: 0.75rem;">Test Connection</a></td>
         </tr>
         <tr>
           <td>Environment</td>

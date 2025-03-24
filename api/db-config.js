@@ -1,63 +1,51 @@
-// Database configuration API endpoint - For validating database connectivity
-// This allows testing database connections without fully enabling the application
+// Database configuration endpoint
+// This file exposes configuration details (without credentials) for the database
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed', allowedMethods: ['GET'] });
-  }
-
   try {
-    // Check if database URL is configured
-    const hasDbConfig = Boolean(process.env.DATABASE_URL);
+    // Check for database configuration
+    const hasDatabase = Boolean(process.env.DATABASE_URL);
+    const isNeonDb = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
     
-    // Build response without exposing sensitive information
+    // Prepare our response
     const dbResponse = {
-      status: hasDbConfig ? 'configured' : 'not_configured',
-      message: hasDbConfig 
-        ? 'Database URL is configured, but connection has not been tested' 
-        : 'Database URL is not configured. Set DATABASE_URL in environment variables.',
+      status: hasDatabase ? 'configured' : 'not_configured',
+      provider: isNeonDb ? 'Neon PostgreSQL' : (hasDatabase ? 'PostgreSQL' : 'none'),
       timestamp: new Date().toISOString(),
-      // Include instructions for both environments
-      vercel_instructions: 'Configure DATABASE_URL in Project Settings > Environment Variables',
-      test_info: {
-        db_type: hasDbConfig ? detectDbType(process.env.DATABASE_URL) : 'unknown',
-        connection_test: {
-          executed: false,
-          message: 'Connection testing is disabled in this diagnostic endpoint'
-        }
-      }
+      maintenance_mode: process.env.MAINTENANCE_MODE === 'true',
+      environment: process.env.NODE_ENV || 'development',
+      connection_pool: false, // Will be updated in future iterations
+      test_endpoint: '/api/neon-test',
+      tips: [
+        'For Neon, ensure DATABASE_URL includes your project details',
+        'The connection string should start with postgres://',
+        'For performance, enable connection pooling in your Neon dashboard',
+        'Set SESSION_SECRET for secure cookie handling'
+      ]
     };
+    
+    // Add hints about expected format without revealing actual connection string
+    if (hasDatabase) {
+      const url = new URL(process.env.DATABASE_URL);
+      dbResponse.connection_info = {
+        host_type: isNeonDb ? 'neon.tech' : url.hostname,
+        has_password: Boolean(url.password),
+        has_username: Boolean(url.username),
+        has_port: Boolean(url.port),
+        ssl_mode: process.env.DATABASE_URL.includes('sslmode=') 
+          ? process.env.DATABASE_URL.match(/sslmode=([^&]*)/)?.[1] || 'unknown' 
+          : 'not specified'
+      };
+    }
     
     res.status(200).json(dbResponse);
   } catch (error) {
-    console.error('Database config API error:', error);
+    console.error('Database config error:', error);
     res.status(500).json({
-      error: 'Internal Server Error',
-      message: error.message,
+      status: 'error',
+      message: 'Error retrieving database configuration',
+      error: error.message,
       timestamp: new Date().toISOString()
     });
   }
-}
-
-// Utility to detect database type from connection string without exposing credentials
-function detectDbType(connectionString) {
-  if (!connectionString) return 'unknown';
-  
-  // Check for common database prefixes in connection strings
-  const dbTypeMapping = {
-    'postgres': 'PostgreSQL',
-    'postgresql': 'PostgreSQL',
-    'mysql': 'MySQL',
-    'mongodb': 'MongoDB',
-    'mongodb+srv': 'MongoDB Atlas',
-    'sqlite': 'SQLite'
-  };
-  
-  for (const [prefix, dbType] of Object.entries(dbTypeMapping)) {
-    if (connectionString.toLowerCase().startsWith(prefix)) {
-      return dbType;
-    }
-  }
-  
-  return 'unknown';
 }

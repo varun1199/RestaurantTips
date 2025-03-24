@@ -73,9 +73,21 @@ export default function handler(req, res) {
     environment: process.env.NODE_ENV || "development",
     region: process.env.VERCEL_REGION || "unknown",
     maintenanceMode: maintenanceMode,
-    databaseConfigured: Boolean(process.env.DATABASE_URL),
+    database: {
+      configured: Boolean(process.env.DATABASE_URL),
+      type: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? 'Neon PostgreSQL' : 'PostgreSQL',
+      testEndpoint: '/api/neon-test'
+    },
     timestamp: new Date().toISOString()
   };
+  
+  // Add the neon-test endpoint to the list of available endpoints
+  apiDocs.endpoints.push({
+    path: "/api/neon-test",
+    method: "GET",
+    description: "Test Neon PostgreSQL database connectivity",
+    status: "available"
+  });
 
   // Return the API documentation as JSON
   res.status(200).json(apiDocs);
