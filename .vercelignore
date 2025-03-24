@@ -1,0 +1,9 @@
+README.md
+.git
+.gitignore
+.env
+.env.example
+node_modules
+attached_assets
+GITHUB_UPLOAD_GUIDE.md
+VERCEL_DEPLOYMENT_GUIDE.md
