@@ -96,6 +96,26 @@ export async function registerRoutes(app: Express) {
       res.json({ message: "Logged out" });
     });
   });
+  
+  // User profile routes
+  app.patch("/api/user/profile", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { username, email } = req.body;
+      
+      // Check if username is already taken by another user
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+      
+      // Update user profile
+      const updatedUser = await storage.updateUserProfile(userId, { username, email });
+      res.json({ ...updatedUser, password: undefined });
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Failed to update profile" });
+    }
+  });
 
   // Employee routes
   app.get("/api/employees", requireAuth, async (_req, res) => {
