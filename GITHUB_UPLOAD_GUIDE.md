@@ -147,6 +147,15 @@ If you receive a "failed to authenticate" error:
    - Solution: Check your internet connection and firewall settings. Some networks block Git operations.
    - Try using a different network or connecting via a mobile hotspot
    - If on a corporate network, consult your IT department as they may block Git protocols
+   - Test your connection to GitHub with:
+     ```bash
+     # For HTTPS connections
+     git ls-remote https://github.com/varun1199/YetiTips.git
+     
+     # For SSH connections
+     git ls-remote git@github.com:varun1199/YetiTips.git
+     ```
+     If these commands return a list of refs, your connection is working!
 
 5. **"error: failed to push some refs to 'https://github.com/varun1199/RestaurantTips.git'"**
    - Solution: The remote repository has changes that you don't have locally.
@@ -157,6 +166,30 @@ If you receive a "failed to authenticate" error:
      # Then try pushing again
      git push origin main
      ```
+
+### Repository Name Change Issue
+
+If you've renamed your project from "RestaurantTips" to "YetiTips" but are still trying to push to the old repository, you'll need to update your remote URL to point to the correct repository:
+
+```bash
+# For HTTPS (with PAT)
+git remote set-url origin https://USERNAME:TOKEN@github.com/varun1199/YetiTips.git
+
+# For SSH
+git remote set-url origin git@github.com:varun1199/YetiTips.git
+```
+
+If you've created a new repository for YetiTips:
+
+1. Create the new repository on GitHub without initializing it
+2. Change your local repository's remote URL:
+   ```bash
+   git remote set-url origin https://github.com/varun1199/YetiTips.git
+   ```
+3. Push your code to the new repository:
+   ```bash
+   git push -u origin main
+   ```
 
 ### Still Having Issues?
 
