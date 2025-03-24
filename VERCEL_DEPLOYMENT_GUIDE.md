@@ -97,6 +97,18 @@ If you see a "This Serverless Function Has Crashed" error:
    - Re-add the GitHub integration
    - Deploy with a fresh build
 
+5. **Try the ultra-minimal version**: For persistent server function crashes:
+   - We've created ultra-minimal versions of all API handlers that have:
+     - No dependencies
+     - Absolute minimal code (a few lines only)
+     - Simple routing in vercel.json
+   - This extremely minimal approach helps isolate whether the issue is with:
+     - The Node.js runtime
+     - Dependency conflicts
+     - Configuration problems
+     - Memory limitations
+   - Once this minimal version works, gradually add back functionality
+
 5. **Update environment variables**: Make sure your DATABASE_URL and other required environment variables are correctly set in the Vercel dashboard.
 
 6. **Try a direct Vercel deployment**: If GitHub deployment continues to fail, try the Vercel CLI approach:
