@@ -66,6 +66,22 @@ Ensure the `api` directory is properly included in your deployment. The project 
 
 Make sure all these files are pushed to your GitHub repository and included in your Vercel deployment.
 
+#### Fixing "This Serverless Function Has Crashed" Error
+
+If you see a "This Serverless Function Has Crashed" error:
+
+1. **Check the vercel.json routes**: Make sure your routes are properly configured to point to the correct serverless functions. The most common issue is routes pointing to non-existent functions or paths.
+
+2. **Simplify the serverless functions**: Our updated approach uses a simplified `api/index.js` file that doesn't depend on finding built files. This should resolve most FUNCTION_INVOCATION_FAILED errors.
+
+3. **Review function logs**: In the Vercel dashboard:
+   - Navigate to your deployment
+   - Click on "Functions"
+   - Select the function that's crashing
+   - Check the logs for specific error messages
+
+4. **Update environment variables**: Make sure your DATABASE_URL and other required environment variables are correctly set in the Vercel dashboard.
+
 #### Database Connection Issues
 
 - Verify your `DATABASE_URL` is correctly set in environment variables
@@ -97,7 +113,11 @@ Common build issues include:
 
 After successful deployment:
 
-1. Your app will be available at `your-project-name.vercel.app`
+1. Your app will be available at a Vercel domain which might look like:
+   - `restaurant-tips-xxxxxxxxxxxx-username.vercel.app` (if using the old project name)
+   - Or `yeti-tips-xxxxxxxxxxxx-username.vercel.app` (if you renamed your project)
+   
+   > Note: The URL includes your project name, not necessarily the repository name
 2. Test all functionality to ensure everything works in the production environment
 3. Set up your custom domain if needed (in Vercel project settings)
 

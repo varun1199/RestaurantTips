@@ -5,9 +5,8 @@
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api", "dest": "/api/adapter.js" },
-    { "src": "/api/(.*)", "dest": "/api/adapter.js" },
-    { "src": "/static", "dest": "/api/static.js" },
+    { "src": "/api", "dest": "/api/index.js" },
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/assets/(.*)", "dest": "/dist/assets/$1" },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/api/static.js" }
