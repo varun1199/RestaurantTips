@@ -164,7 +164,7 @@ export default function Dashboard() {
             <CardTitle>Tips Over Time</CardTitle>
             <div className="flex gap-4 items-center">
               <div>
-                <FormLabel>From</FormLabel>
+                <label className="text-sm font-medium leading-none">From</label>
                 <Input
                   type="date"
                   value={graphStartDate}
@@ -173,7 +173,7 @@ export default function Dashboard() {
                 />
               </div>
               <div>
-                <FormLabel>To</FormLabel>
+                <label className="text-sm font-medium leading-none">To</label>
                 <Input
                   type="date"
                   value={graphEndDate}
