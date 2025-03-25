@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "node vercel-build.js",
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "functions": {
@@ -15,7 +15,6 @@
     { "src": "/api/hello", "dest": "/api/hello.js" },
     { "src": "/api/db-config", "dest": "/api/db-config.js" },
     { "src": "/api/neon-test", "dest": "/api/neon-test.js" },
-    { "src": "/api/serve", "dest": "/api/serve.js" },
     { "src": "/api", "dest": "/api/index.js" },
     { "src": "/status", "dest": "/api/status.js" },
     { "src": "/fallback", "dest": "/api/fallback.js" },
