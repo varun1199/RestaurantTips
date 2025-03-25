@@ -8,15 +8,25 @@
     { "src": "package.json", "use": "@vercel/node" }
   ],
   "routes": [
+    { "src": "/api/health", "dest": "/api/health.js" },
     { "src": "/api/hello", "dest": "/api/hello.js" },
     { "src": "/api/db-config", "dest": "/api/db-config.js" },
     { "src": "/api/neon-test", "dest": "/api/neon-test.js" },
+    { "src": "/api/serve", "dest": "/api/serve.js" },
     { "src": "/api", "dest": "/api/index.js" },
     { "src": "/status", "dest": "/api/status.js" },
-    { "src": "/(.*)", "dest": "/api/fallback.js" }
+    { "src": "/fallback", "dest": "/api/fallback.js" },
+    { "src": "/(.*)", "dest": "/api/serve.js" }
   ],
+  "functions": {
+    "api/*.js": {
+      "memory": 512,
+      "maxDuration": 10
+    }
+  },
   "env": {
     "MAINTENANCE_MODE": "false",
+    "NODE_ENV": "production",
     "NODE_VERSION": "18.x"
   }
 }

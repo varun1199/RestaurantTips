@@ -5,92 +5,184 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// For ES module compatibility
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Check possible dist locations
+// Debug information about the environment
+console.log('Current directory:', process.cwd());
+console.log('__dirname:', __dirname);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('VERCEL_ENV:', process.env.VERCEL_ENV);
+
+// Check multiple possible dist locations
 const possiblePaths = [
-  path.join(__dirname, '..', 'dist'),           // /api/../dist
-  path.join(__dirname, '..', '..', 'dist'),     // /api/../../dist  
-  path.join(process.cwd(), 'dist'),             // Current working directory/dist
-  '/var/task/dist',                             // Vercel lambda environment
+  path.join(__dirname, '..', 'dist'),               // /api/../dist
+  path.join(__dirname, '..', '..', 'dist'),         // /api/../../dist  
+  path.join(process.cwd(), 'dist'),                 // Current working directory/dist
+  '/var/task/dist',                                 // Vercel lambda environment
+  path.join(process.cwd(), 'public'),               // For static sites
+  '.vercel/output/static'                           // Vercel build output
 ];
 
 // Find the first path that exists
 let distPath = null;
 for (const testPath of possiblePaths) {
-  if (fs.existsSync(testPath) && fs.existsSync(path.join(testPath, 'index.html'))) {
-    distPath = testPath;
-    break;
+  console.log('Checking path:', testPath);
+  if (fs.existsSync(testPath)) {
+    console.log(`Path ${testPath} exists!`);
+    const hasIndexHtml = fs.existsSync(path.join(testPath, 'index.html'));
+    console.log(`${testPath} has index.html:`, hasIndexHtml);
+    
+    if (hasIndexHtml) {
+      distPath = testPath;
+      break;
+    }
   }
 }
 
 // Log discovered path and directory content for debugging
-console.log('Discovered dist path:', distPath);
+console.log('Selected dist path:', distPath);
 if (distPath && fs.existsSync(distPath)) {
-  console.log('Directory contents:', fs.readdirSync(distPath));
+  try {
+    console.log('Directory contents:', fs.readdirSync(distPath));
+  } catch (err) {
+    console.error('Error reading directory:', err);
+  }
 }
+
+// Define API routes first - these take precedence over static files
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Yeti Tips & Till API is running',
+    timestamp: new Date().toISOString(),
+    distPath: distPath || 'Not found',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Proxy API requests to their corresponding handlers
+app.all('/api/hello', (req, res) => {
+  import('./hello.js').then(module => {
+    module.default(req, res);
+  }).catch(err => {
+    console.error('Error importing hello handler:', err);
+    res.status(500).json({ error: 'Failed to load API handler' });
+  });
+});
+
+app.all('/api/neon-test', (req, res) => {
+  import('./neon-test.js').then(module => {
+    module.default(req, res);
+  }).catch(err => {
+    console.error('Error importing neon-test handler:', err);
+    res.status(500).json({ error: 'Failed to load API handler' });
+  });
+});
+
+app.all('/api/db-config', (req, res) => {
+  import('./db-config.js').then(module => {
+    module.default(req, res);
+  }).catch(err => {
+    console.error('Error importing db-config handler:', err);
+    res.status(500).json({ error: 'Failed to load API handler' });
+  });
+});
+
+app.all('/status', (req, res) => {
+  import('./status.js').then(module => {
+    module.default(req, res);
+  }).catch(err => {
+    console.error('Error importing status handler:', err);
+    res.status(500).json({ error: 'Failed to load status handler' });
+  });
+});
+
+// Special handler for the root API endpoint to serve documentation
+app.all('/api', (req, res) => {
+  import('./index.js').then(module => {
+    module.default(req, res);
+  }).catch(err => {
+    console.error('Error importing API index handler:', err);
+    res.status(500).json({ error: 'Failed to load API documentation' });
+  });
+});
 
 // Set fallback if no dist directory is found
 if (!distPath) {
   console.warn('Could not find dist directory, serving fallback HTML');
   
-  // Simple fallback HTML if we can't find the app
+  // Redirect to the fallback endpoint
   app.get('*', (req, res) => {
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Yeti Tips & Till</title>
-          <style>
-            body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-            .error { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin: 20px 0; }
-            .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin: 20px 0; }
-            h1 { color: #2563eb; }
-          </style>
-        </head>
-        <body>
-          <h1>Yeti Tips & Till</h1>
-          <div class="error">
-            <h2>Application Load Error</h2>
-            <p>The application could not find the required build files. This might be a temporary deployment issue.</p>
-          </div>
-          <div class="card">
-            <h3>Troubleshooting</h3>
-            <p>This error usually happens when the build process didn't complete successfully or the build files couldn't be found.</p>
-            <ul>
-              <li>Try redeploying the application</li>
-              <li>Check the Vercel build logs for errors</li>
-              <li>Ensure the build command is working correctly</li>
-            </ul>
-          </div>
-          <div class="card">
-            <h3>API Status</h3>
-            <p>You can check the API status here:</p>
-            <ul>
-              <li><a href="/api/hello">API Health Check</a></li>
-              <li><a href="/status">System Status</a></li>
-              <li><a href="/api/neon-test">Database Test</a></li>
-            </ul>
-          </div>
-        </body>
-      </html>
-    `);
+    // Load the fallback handler dynamically
+    import('./fallback.js').then(module => {
+      module.default(req, res);
+    }).catch(err => {
+      console.error('Error importing fallback handler:', err);
+      
+      // Super simple fallback if the fallback handler fails
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Yeti Tips & Till</title>
+            <style>
+              body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+              .error { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <h1>Yeti Tips & Till</h1>
+            <div class="error">
+              <h2>Application Error</h2>
+              <p>The application could not be loaded. Please check the deployment configuration.</p>
+            </div>
+            <p>The API is available at: <a href="/api">/api</a></p>
+            <p>System status: <a href="/status">/status</a></p>
+          </body>
+        </html>
+      `);
+    });
   });
 } else {
-  // Serve static files from the dist directory if we found it
-  app.use(express.static(distPath));
+  console.log('Serving static files from:', distPath);
+  
+  // Handle static assets
+  app.use(express.static(distPath, {
+    // Set caching headers for better performance
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      const fileExt = path.extname(filePath).toLowerCase();
+      
+      // Cache static assets for 1 day, HTML for 5 minutes
+      if (fileExt === '.html') {
+        res.setHeader('Cache-Control', 'public, max-age=300');
+      } else if (['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg'].includes(fileExt)) {
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+      }
+    }
+  }));
 
-  // Fallback to index.html for client-side routing
+  // Fallback to index.html for client-side routing (after API routes)
   app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
+    // Check if path exists, otherwise fallback to index.html
+    const filePath = path.join(distPath, req.path);
+    
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      res.sendFile(filePath);
+    } else {
+      res.sendFile(path.join(distPath, 'index.html'));
+    }
   });
 }
 
 // Export the serverless handler
-export default serverless(app);
+const handler = serverless(app);
+export default handler;
 
 // If not running in a serverless environment, start a server
 if (typeof process.env.VERCEL === 'undefined') {
