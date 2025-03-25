@@ -57,15 +57,56 @@ function prepareApiFiles() {
   const apiDir = path.join(process.cwd(), 'api');
   
   if (!fs.existsSync(apiDir)) {
+    console.warn('API directory not found at:', apiDir);
     fs.mkdirSync(apiDir, { recursive: true });
+    
+    // Create basic API files if they don't exist
+    const basicHelloApi = `
+// Simple hello world API endpoint
+export default function handler(req, res) {
+  res.status(200).json({
+    message: 'Hello from Yeti Tips & Till API!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0'
+  });
+}
+`;
+    
+    const basicHealthApi = `
+// Health check API endpoint
+export default function handler(req, res) {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Yeti Tips & Till API is running',
+    timestamp: new Date().toISOString()
+  });
+}
+`;
+
+    // Write basic files to ensure deployment doesn't fail
+    fs.writeFileSync(path.join(apiDir, 'hello.js'), basicHelloApi.trim());
+    fs.writeFileSync(path.join(apiDir, 'health.js'), basicHealthApi.trim());
+    console.log('Created basic API files to ensure deployment works');
   }
   
   // Make sure API files are in place and copied to the output directory
   const requiredApiFiles = ['health.js', 'hello.js', 'status.js', 'neon-test.js', 'db-config.js', 'index.js', 'serve.js', 'fallback.js'];
   
+  // Creates an empty Vercel function directory structure
+  const functionOutputDir = path.join('.vercel', 'output', 'functions');
+  if (!fs.existsSync(functionOutputDir)) {
+    fs.mkdirSync(functionOutputDir, { recursive: true });
+  }
+  
+  // Try to copy from API directory
   requiredApiFiles.forEach(filename => {
     const source = path.join(apiDir, filename);
-    const destination = path.join('dist', 'api', filename);
+    
+    // First, copy to dist/api for serving from our Express fallback
+    const destInDist = path.join('dist', 'api', filename);
+    // Also create .vercel/output/functions/api/*
+    const destInVercel = path.join(functionOutputDir, 'api', `${path.basename(filename, '.js')}.func`);
     
     if (fs.existsSync(source)) {
       // Make sure dist/api directory exists
@@ -74,7 +115,22 @@ function prepareApiFiles() {
       }
       
       // Copy the file to dist/api
-      copyFile(source, destination);
+      copyFile(source, destInDist);
+      
+      // Create Vercel function directory
+      if (!fs.existsSync(destInVercel)) {
+        fs.mkdirSync(destInVercel, { recursive: true });
+        
+        // Create the .vc-config.json file for the function
+        const vcConfig = {
+          runtime: "edge",
+          entrypoint: filename
+        };
+        fs.writeFileSync(path.join(destInVercel, '.vc-config.json'), JSON.stringify(vcConfig, null, 2));
+        
+        // Copy the file to the Vercel function directory
+        copyFile(source, path.join(destInVercel, filename));
+      }
     } else {
       console.warn(`API file ${filename} not found in api directory`);
     }

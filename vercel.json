@@ -3,11 +3,11 @@
   "buildCommand": "node vercel-build.js",
   "outputDirectory": "dist",
   "installCommand": "npm install",
+  "public": true,
   "functions": {
     "api/*.js": {
-      "memory": 512,
-      "maxDuration": 10,
-      "runtime": "nodejs18.x"
+      "memory": 1024,
+      "maxDuration": 10
     }
   },
   "routes": [
