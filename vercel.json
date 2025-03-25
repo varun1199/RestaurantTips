@@ -13,6 +13,24 @@
   },
   "routes": [
     { "handle": "filesystem" },
+    {
+      "src": "/(.*)", 
+      "headers": { 
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
+      },
+      "continue": true
+    },
+    {
+      "src": "/api/(.*)",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept"
+      },
+      "continue": true
+    },
     { "src": "/api/health", "dest": "/api/health.js", "methods": ["GET"] },
     { "src": "/api/hello", "dest": "/api/hello.js", "methods": ["GET"] },
     { "src": "/api/db-config", "dest": "/api/db-config.js", "methods": ["GET"] },
@@ -33,41 +51,5 @@
       "MAINTENANCE_MODE": "false",
       "NODE_ENV": "production"
     }
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        }
-      ]
-    },
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, OPTIONS"
-        },
-        {
-          "key": "Access-Control-Allow-Headers",
-          "value": "X-Requested-With, Content-Type, Accept"
-        }
-      ]
-    }
-  ]
+  }
 }
