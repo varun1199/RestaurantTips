@@ -1,87 +1,33 @@
 // API documentation endpoint
 export default function handler(req, res) {
-  const apiDocs = {
-    name: 'Yeti Tips & Till API',
-    version: '1.0.0',
-    description: 'API for Yeti Tips & Till restaurant management application',
-    endpoints: [
-      {
-        path: '/api/hello',
-        method: 'GET',
-        description: 'Basic API health check',
-        response: {
-          message: 'Hello from Yeti Tips & Till API!',
-          status: 'ok',
-          timestamp: '2023-01-01T00:00:00.000Z'
-        }
-      },
-      {
-        path: '/api/neon-test',
-        method: 'GET',
-        description: 'Test connection to the Neon PostgreSQL database',
-        response: {
-          success: true,
-          message: 'Successfully connected to the database',
-          version: 'PostgreSQL 15.x',
-          timestamp: '2023-01-01T00:00:00.000Z'
-        }
-      },
-      {
-        path: '/api/db-config',
-        method: 'GET',
-        description: 'Get database configuration information (without exposing credentials)',
-        response: {
-          success: true,
-          config: {
-            connectionUrl: 'postgresql://***:***@hostname:5432/database',
-            host: 'hostname',
-            port: '5432',
-            database: 'database',
-            ssl: true,
-            driver: 'postgresql',
-            provider: 'Neon'
-          },
-          timestamp: '2023-01-01T00:00:00.000Z'
-        }
-      },
-      {
-        path: '/status',
-        method: 'GET',
-        description: 'Get system status information',
-        response: 'HTML status page or JSON status object'
-      }
-    ],
-    maintenanceMode: process.env.MAINTENANCE_MODE === 'true'
-  };
-
+  // If client accepts HTML, send HTML documentation
   if (req.headers.accept && req.headers.accept.includes('text/html')) {
-    // Return HTML documentation if requested
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yeti Tips & Till API Documentation</title>
+  <title>Yeti Tips & Till - API Documentation</title>
   <style>
     :root {
       --primary: #2563eb;
-      --primary-light: #3b82f6;
       --primary-dark: #1d4ed8;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
+      --bg: #f9fafb;
+      --text: #111827;
       --code-bg: #f3f4f6;
+      --code-border: #e5e7eb;
+      --text-secondary: #4b5563;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f9fafb;
-      color: #111827;
+      color: var(--text);
+      background-color: var(--bg);
       line-height: 1.5;
     }
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: 0 auto;
       padding: 2rem 1rem;
     }
@@ -89,7 +35,6 @@ export default function handler(req, res) {
       background-color: var(--primary);
       color: white;
       padding: 1.5rem 0;
-      margin-bottom: 2rem;
     }
     header .container {
       display: flex;
@@ -98,59 +43,67 @@ export default function handler(req, res) {
       padding-top: 0.5rem;
       padding-bottom: 0.5rem;
     }
-    h1 {
-      margin: 0;
-      font-size: 1.8rem;
-    }
     .logo {
       font-weight: bold;
       font-size: 1.8rem;
     }
-    .card {
-      background-color: white;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+    h1, h2, h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
     }
-    .endpoint {
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 1.5rem;
-      margin-bottom: 1.5rem;
+    h1 {
+      margin-top: 0;
+      font-size: 2rem;
     }
-    .endpoint:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
+    h2 {
+      font-size: 1.5rem;
+      border-bottom: 1px solid var(--code-border);
+      padding-bottom: 0.5rem;
     }
-    .method {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      font-family: monospace;
-      font-weight: bold;
-      background-color: var(--primary-light);
-      color: white;
-      margin-right: 0.5rem;
-    }
-    .path {
-      font-family: monospace;
-      font-weight: bold;
-      color: var(--primary-dark);
+    pre, code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
     }
     pre {
       background-color: var(--code-bg);
-      padding: 1rem;
+      border: 1px solid var(--code-border);
       border-radius: 0.25rem;
+      padding: 1rem;
       overflow-x: auto;
-      font-size: 0.875rem;
     }
     code {
-      font-family: monospace;
       background-color: var(--code-bg);
       padding: 0.2rem 0.4rem;
       border-radius: 0.25rem;
-      font-size: 0.875rem;
+    }
+    pre code {
+      background-color: transparent;
+      padding: 0;
+    }
+    .endpoint {
+      margin-bottom: 2rem;
+    }
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .method {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      background-color: var(--primary);
+      color: white;
+      font-weight: bold;
+      min-width: 60px;
+      text-align: center;
+    }
+    .path {
+      font-weight: 500;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .description {
+      margin-bottom: 1rem;
     }
     .button {
       display: inline-block;
@@ -159,28 +112,45 @@ export default function handler(req, res) {
       padding: 0.5rem 1rem;
       border-radius: 0.25rem;
       text-decoration: none;
-      margin-right: 0.5rem;
-      font-weight: 500;
+      transition: background-color 0.15s ease-in-out;
     }
     .button:hover {
       background-color: var(--primary-dark);
     }
     .button.secondary {
       background-color: transparent;
-      border: 1px solid #d1d5db;
-      color: #374151;
+      color: var(--text);
+      border: 1px solid var(--code-border);
     }
     .button.secondary:hover {
-      background-color: #f3f4f6;
+      background-color: var(--code-bg);
     }
-    .maintenance-banner {
-      background-color: rgba(245, 158, 11, 0.1);
-      color: var(--warning);
-      padding: 0.5rem 1rem;
-      border-radius: 0.25rem;
+    .response-example {
+      margin-top: 1rem;
+    }
+    .table-container {
+      overflow-x: auto;
       margin-bottom: 1rem;
-      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem;
+      border-bottom: 1px solid var(--code-border);
+    }
+    th {
       font-weight: 500;
+      background-color: var(--code-bg);
+    }
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--code-border);
+      color: var(--text-secondary);
+      font-size: 0.875rem;
     }
   </style>
 </head>
@@ -196,34 +166,147 @@ export default function handler(req, res) {
   </header>
   
   <div class="container">
-    ${apiDocs.maintenanceMode ? `
-    <div class="maintenance-banner">
-      The API is currently in maintenance mode. Some endpoints may be unavailable.
-    </div>` : ''}
+    <h1>API Documentation</h1>
+    <p>Welcome to the Yeti Tips & Till API documentation. This guide provides information about the available endpoints and how to use them.</p>
     
-    <div class="card">
-      <h2>API Documentation</h2>
-      <p>${apiDocs.description}</p>
-      <p><strong>Version:</strong> ${apiDocs.version}</p>
-    </div>
+    <h2>Status & Health</h2>
     
-    <div class="card">
-      <h2>Endpoints</h2>
-      
-      ${apiDocs.endpoints.map(endpoint => `
-      <div class="endpoint">
-        <h3><span class="method">${endpoint.method}</span> <span class="path">${endpoint.path}</span></h3>
-        <p>${endpoint.description}</p>
-        <h4>Example Response:</h4>
-        <pre>${JSON.stringify(endpoint.response, null, 2)}</pre>
-        <a href="${endpoint.path}" class="button secondary">Try It</a>
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/health</span>
       </div>
-      `).join('')}
+      <div class="description">
+        <p>Check if the API is running and healthy.</p>
+      </div>
+      
+      <h3>Example Response</h3>
+      <pre><code>{
+  "status": "ok",
+  "message": "Yeti Tips & Till API is healthy",
+  "timestamp": "2025-03-06T14:25:43.511Z",
+  "environment": "production",
+  "vercelEnvironment": "production",
+  "databaseConfigured": "yes",
+  "maintenanceMode": false
+}</code></pre>
+
+      <a href="/api/health" class="button secondary" target="_blank">Try it</a>
     </div>
     
-    <div class="card">
-      <h2>Authentication</h2>
-      <p>Most API endpoints require authentication through cookies or session tokens when the application is fully deployed.</p>
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/status</span>
+      </div>
+      <div class="description">
+        <p>Get detailed system status including API, database, and frontend build status.</p>
+      </div>
+      
+      <h3>Example Response</h3>
+      <pre><code>{
+  "app": {
+    "status": "online",
+    "environment": "production",
+    "version": "1.0.0",
+    "timestamp": "2025-03-06T14:26:12.733Z",
+    "maintenance": false
+  },
+  "api": {
+    "status": "online",
+    "endpoints": ["/api/hello", "/api/db-config", "/api/neon-test"]
+  },
+  "database": {
+    "status": "connected",
+    "type": "PostgreSQL (Neon)",
+    "version": "15.3"
+  },
+  "build": {
+    "status": "available",
+    "indexHtml": true
+  }
+}</code></pre>
+
+      <a href="/status" class="button secondary" target="_blank">Try it</a>
+    </div>
+    
+    <h2>Database</h2>
+    
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/db-config</span>
+      </div>
+      <div class="description">
+        <p>Get information about the database configuration (without exposing sensitive details).</p>
+      </div>
+      
+      <h3>Example Response</h3>
+      <pre><code>{
+  "success": true,
+  "database": {
+    "type": "PostgreSQL (Neon)",
+    "configured": true,
+    "connectionString": "**********"
+  },
+  "environment": "production",
+  "timestamp": "2025-03-06T14:27:03.123Z"
+}</code></pre>
+
+      <a href="/api/db-config" class="button secondary" target="_blank">Try it</a>
+    </div>
+    
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/neon-test</span>
+      </div>
+      <div class="description">
+        <p>Test the connection to the Neon PostgreSQL database.</p>
+      </div>
+      
+      <h3>Example Response (Success)</h3>
+      <pre><code>{
+  "success": true,
+  "message": "Successfully connected to the database",
+  "version": "PostgreSQL 15.3 on x86_64-pc-linux-gnu, compiled by gcc...",
+  "timestamp": "2025-03-06T14:28:15.456Z"
+}</code></pre>
+
+      <h3>Example Response (Error)</h3>
+      <pre><code>{
+  "success": false,
+  "error": "Connection error: could not connect to server",
+  "timestamp": "2025-03-06T14:29:45.789Z"
+}</code></pre>
+
+      <a href="/api/neon-test" class="button secondary" target="_blank">Try it</a>
+    </div>
+    
+    <h2>Miscellaneous</h2>
+    
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/hello</span>
+      </div>
+      <div class="description">
+        <p>A simple hello world endpoint for testing.</p>
+      </div>
+      
+      <h3>Example Response</h3>
+      <pre><code>{
+  "message": "Hello from Yeti Tips & Till API!",
+  "timestamp": "2025-03-06T14:30:22.123Z",
+  "environment": "production",
+  "version": "1.0.0"
+}</code></pre>
+
+      <a href="/api/hello" class="button secondary" target="_blank">Try it</a>
+    </div>
+    
+    <div class="footer">
+      <p>Yeti Tips & Till API Documentation | Updated: ${new Date().toLocaleString()}</p>
     </div>
   </div>
 </body>
@@ -232,7 +315,43 @@ export default function handler(req, res) {
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(html);
   } else {
-    // Return JSON by default
+    // Otherwise send JSON documentation
+    const apiDocs = {
+      api: 'Yeti Tips & Till',
+      version: '1.0.0',
+      description: 'API for the Yeti Tips & Till restaurant tip management application',
+      endpoints: [
+        {
+          path: '/api/health',
+          method: 'GET',
+          description: 'Check if the API is running and healthy'
+        },
+        {
+          path: '/status',
+          method: 'GET',
+          description: 'Get detailed system status including API, database, and frontend build status'
+        },
+        {
+          path: '/api/db-config',
+          method: 'GET',
+          description: 'Get information about the database configuration (without exposing sensitive details)'
+        },
+        {
+          path: '/api/neon-test',
+          method: 'GET',
+          description: 'Test the connection to the Neon PostgreSQL database'
+        },
+        {
+          path: '/api/hello',
+          method: 'GET',
+          description: 'A simple hello world endpoint for testing'
+        }
+      ],
+      timestamp: new Date().toISOString(),
+      documentation_url: '/api',
+      status_url: '/status'
+    };
+
     res.setHeader('Content-Type', 'application/json');
     res.status(200).json(apiDocs);
   }

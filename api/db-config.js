@@ -1,49 +1,23 @@
-// API endpoint to verify database configuration (without exposing secrets)
+// API endpoint for database configuration information
 export default function handler(req, res) {
-  // Get DATABASE_URL from environment variables
-  const databaseUrl = process.env.DATABASE_URL;
-  
-  // Check if DATABASE_URL is defined
-  if (!databaseUrl) {
-    return res.status(500).json({
-      success: false,
-      error: 'DATABASE_URL environment variable is not defined',
-      instructions: 'Please set the DATABASE_URL environment variable in Vercel project settings'
-    });
-  }
-  
-  try {
-    // Parse the connection string without exposing credentials
-    // Format: postgresql://username:password@hostname:port/database
-    const cleanUrl = databaseUrl.replace(/(postgresql:\/\/)([^:]+)(:[^@]+)(@.*)/, '$1***:***$4');
-    
-    // Extract host information
-    const urlObj = new URL(databaseUrl);
-    const host = urlObj.hostname;
-    const port = urlObj.port || '5432';
-    const database = urlObj.pathname.replace('/', '');
-    
-    // Return configuration information without exposing credentials
-    return res.status(200).json({
-      success: true,
-      config: {
-        connectionUrl: cleanUrl,
-        host: host,
-        port: port,
-        database: database,
-        ssl: databaseUrl.includes('sslmode=require') ? true : 'default',
-        driver: 'postgresql',
-        provider: host.includes('neon.tech') ? 'Neon' : 'PostgreSQL'
-      },
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    // Return error response
-    return res.status(500).json({
-      success: false,
-      error: 'Invalid database connection string format',
-      detail: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
+  // Check for DATABASE_URL (don't expose the actual connection string)
+  const hasDbUrl = !!process.env.DATABASE_URL;
+  const dbUrlRedacted = hasDbUrl ? 
+    '**********' : 
+    'Not configured';
+
+  // Configuration info
+  const config = {
+    success: true,
+    database: {
+      type: 'PostgreSQL (Neon)',
+      configured: hasDbUrl,
+      connectionString: dbUrlRedacted
+    },
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  };
+
+  // Return the configuration info
+  res.status(200).json(config);
 }
