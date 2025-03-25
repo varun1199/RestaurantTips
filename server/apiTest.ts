@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { Client } from '@neondatabase/serverless';
+import os from 'os';
+import { version as nodeVersion } from 'process';
 
+const APP_VERSION = '1.0.0';
 const router = Router();
 
 // Simple hello endpoint
@@ -9,7 +12,7 @@ router.get('/hello', (req, res) => {
     message: 'Hello from Yeti Tips & Till API!',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    version: '1.0.0'
+    version: APP_VERSION
   });
 });
 
@@ -91,6 +94,83 @@ router.get('/neon-test', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   }
+});
+
+// Comprehensive status endpoint for monitoring
+router.get('/status', async (req, res) => {
+  const startTime = Date.now();
+  const environment = process.env.NODE_ENV || 'development';
+  const vercelEnv = process.env.VERCEL_ENV || 'local';
+  const hasDbUrl = !!process.env.DATABASE_URL;
+  const maintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  
+  // System information
+  const systemInfo = {
+    platform: process.platform,
+    nodeVersion: nodeVersion,
+    uptime: Math.floor(process.uptime()),
+    totalMemory: Math.round(os.totalmem() / (1024 * 1024)),
+    freeMemory: Math.round(os.freemem() / (1024 * 1024)),
+    cpus: os.cpus().length
+  };
+  
+  // Default database status
+  let dbStatus = {
+    connected: false,
+    version: null,
+    error: hasDbUrl ? null : 'DATABASE_URL not configured'
+  };
+  
+  // Test database connection if URL is available
+  if (hasDbUrl) {
+    try {
+      const client = new Client(process.env.DATABASE_URL!);
+      await client.connect();
+      const result = await client.query('SELECT version()');
+      await client.end();
+      
+      dbStatus = {
+        connected: true,
+        version: result.rows[0].version,
+        error: null
+      };
+    } catch (err) {
+      const error = err as { message: string };
+      dbStatus.error = error.message;
+    }
+  }
+  
+  // Calculate response time
+  const responseTime = Date.now() - startTime;
+  
+  // Complete status response
+  res.json({
+    application: {
+      name: 'Yeti Tips & Till',
+      version: APP_VERSION,
+      status: dbStatus.connected ? 'healthy' : 'degraded',
+      environment,
+      vercelEnvironment: vercelEnv,
+      maintenanceMode,
+      timestamp: new Date().toISOString(),
+      responseTime: `${responseTime}ms`
+    },
+    database: {
+      type: 'PostgreSQL (Neon)',
+      configured: hasDbUrl,
+      connected: dbStatus.connected,
+      version: dbStatus.version,
+      error: dbStatus.error
+    },
+    system: systemInfo,
+    endpoints: [
+      { path: '/api/hello', method: 'GET', status: 'available' },
+      { path: '/api/health', method: 'GET', status: 'available' },
+      { path: '/api/db-config', method: 'GET', status: 'available' },
+      { path: '/api/neon-test', method: 'GET', status: 'available' },
+      { path: '/api/status', method: 'GET', status: 'available' }
+    ]
+  });
 });
 
 export default router;

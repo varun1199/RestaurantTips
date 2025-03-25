@@ -93,6 +93,88 @@ export default function handler(req, res) {
   // Make sure API files are in place and copied to the output directory
   const requiredApiFiles = ['health.js', 'hello.js', 'status.js', 'neon-test.js', 'db-config.js', 'index.js', 'serve.js', 'fallback.js'];
   
+  // Create a special version of the status.js file if it doesn't exist
+  if (!fs.existsSync(path.join(apiDir, 'status.js'))) {
+    const statusApiContent = `
+// API route for system status check
+import { Client } from '@neondatabase/serverless';
+import os from 'os';
+
+export default async function handler(req, res) {
+  const startTime = Date.now();
+  const environment = process.env.NODE_ENV || 'development';
+  const vercelEnv = process.env.VERCEL_ENV || 'local';
+  const hasDbUrl = !!process.env.DATABASE_URL;
+  const maintenanceMode = process.env.MAINTENANCE_MODE === 'true';
+  
+  // System information
+  const systemInfo = {
+    platform: process.platform,
+    nodeVersion: process.version,
+    uptime: Math.floor(process.uptime()),
+    environment,
+    vercelEnvironment: vercelEnv
+  };
+  
+  // Default database status
+  let dbStatus = {
+    connected: false,
+    version: null,
+    error: hasDbUrl ? null : 'DATABASE_URL not configured'
+  };
+  
+  // Test database connection if URL is available
+  if (hasDbUrl) {
+    try {
+      const client = new Client(process.env.DATABASE_URL);
+      await client.connect();
+      const result = await client.query('SELECT version()');
+      await client.end();
+      
+      dbStatus = {
+        connected: true,
+        version: result.rows[0].version,
+        error: null
+      };
+    } catch (err) {
+      dbStatus.error = err.message;
+    }
+  }
+  
+  // Calculate response time
+  const responseTime = Date.now() - startTime;
+  
+  // Complete status response
+  res.json({
+    application: {
+      name: 'Yeti Tips & Till',
+      version: '1.0.0',
+      status: dbStatus.connected ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      responseTime: \`\${responseTime}ms\`
+    },
+    database: {
+      type: 'PostgreSQL (Neon)',
+      configured: hasDbUrl,
+      connected: dbStatus.connected,
+      version: dbStatus.version,
+      error: dbStatus.error
+    },
+    system: systemInfo,
+    endpoints: [
+      { path: '/api/hello', method: 'GET', status: 'available' },
+      { path: '/api/health', method: 'GET', status: 'available' },
+      { path: '/api/db-config', method: 'GET', status: 'available' },
+      { path: '/api/neon-test', method: 'GET', status: 'available' },
+      { path: '/api/status', method: 'GET', status: 'available' }
+    ]
+  });
+}
+`;
+    fs.writeFileSync(path.join(apiDir, 'status.js'), statusApiContent.trim());
+    console.log('Created status.js API file');
+  }
+  
   // Creates an empty Vercel function directory structure
   const functionOutputDir = path.join('.vercel', 'output', 'functions');
   if (!fs.existsSync(functionOutputDir)) {
