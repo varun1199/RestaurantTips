@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express) {
   );
   
   // Register API test routes
-  app.use('/api-test', apiTestRoutes);
+  app.use('/api', apiTestRoutes);
 
   // Auth middleware
   const requireAuth = (req: Request, res: Response, next: Function) => {
