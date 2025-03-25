@@ -1,6 +1,7 @@
 {
   "version": 2,
   "builds": [
+    { "src": "vercel-build.js", "use": "@vercel/node" },
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
@@ -8,10 +9,8 @@
     { "src": "/api/db-config", "dest": "/api/db-config.js" },
     { "src": "/api/neon-test", "dest": "/api/neon-test.js" },
     { "src": "/api", "dest": "/api/index.js" },
-    { "src": "/api/(.*)", "dest": "/api/adapter.js" },
     { "src": "/status", "dest": "/api/status.js" },
-    { "src": "/", "dest": "/api/app.js" },
-    { "src": "/(.*)", "dest": "/api/app.js" }
+    { "src": "/(.*)", "dest": "/api/serve.js" }
   ],
   "env": {
     "MAINTENANCE_MODE": "false"
