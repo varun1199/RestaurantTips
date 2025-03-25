@@ -1,52 +1,132 @@
-// Status endpoint - displays environment and system information
-export default function handler(req, res) {
-  try {
-    // Create environment report (without revealing secrets)
-    const envReport = {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'unknown',
-      region: process.env.VERCEL_REGION || 'unknown',
-      runtime: {
-        node: process.versions.node,
-        v8: process.versions.v8,
-      },
-      // Include a placeholder for DB status - don't actually test DB to avoid errors
-      database: {
-        configured: process.env.DATABASE_URL ? 'yes' : 'no',
-        // Don't include actual connection string for security
-      },
-      system: {
-        platform: process.platform,
-        arch: process.arch,
-        uptime: Math.floor(process.uptime()),
-        memoryUsage: process.memoryUsage(),
-      },
-      vercel: {
-        id: process.env.VERCEL_ID || 'unknown',
-        environment: process.env.VERCEL_ENV || 'unknown',
-        // More Vercel-specific environment variables could be added here
-      }
-    };
+// API route for system status check
+import { Client } from '@neondatabase/serverless';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-    // Create a nice HTML page to display this information
+// Get directory name in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export default async function handler(req, res) {
+  // Initialize status object
+  const status = {
+    app: {
+      status: 'online',
+      environment: process.env.NODE_ENV || 'development',
+      version: process.env.npm_package_version || '1.0.0',
+      timestamp: new Date().toISOString(),
+      maintenance: process.env.MAINTENANCE_MODE === 'true'
+    },
+    api: {
+      status: 'online',
+      endpoints: ['/api/hello', '/api/db-config', '/api/neon-test']
+    },
+    database: {
+      status: 'checking',
+      type: 'PostgreSQL (Neon)',
+      error: null
+    },
+    build: {
+      status: 'checking',
+      error: null
+    }
+  };
+  
+  // Check for dist directory and index.html
+  try {
+    const rootDir = path.resolve(__dirname, '..');
+    const distPath = path.join(rootDir, 'dist');
+    
+    if (fs.existsSync(distPath)) {
+      status.build.status = 'available';
+      
+      if (fs.existsSync(path.join(distPath, 'index.html'))) {
+        status.build.indexHtml = true;
+      } else {
+        status.build.indexHtml = false;
+        status.build.error = 'index.html not found in dist directory';
+      }
+    } else {
+      status.build.status = 'missing';
+      status.build.error = 'dist directory not found';
+    }
+  } catch (error) {
+    status.build.status = 'error';
+    status.build.error = error.message;
+  }
+  
+  // Check database connection
+  try {
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      status.database.status = 'unconfigured';
+      status.database.error = 'DATABASE_URL not defined';
+    } else {
+      const client = new Client(databaseUrl);
+      await client.connect();
+      const result = await client.query('SELECT version()');
+      await client.end();
+      
+      status.database.status = 'connected';
+      status.database.version = result.rows[0].version.split(' ')[0];
+    }
+  } catch (error) {
+    status.database.status = 'error';
+    status.database.error = error.message;
+  }
+  
+  // Determine the overall system status
+  if (
+    status.database.status === 'connected' && 
+    status.api.status === 'online' && 
+    status.build.status === 'available'
+  ) {
+    status.app.status = 'online';
+  } else if (status.database.status === 'error') {
+    status.app.status = 'degraded';
+  } else if (status.build.status !== 'available') {
+    status.app.status = 'partial';
+  }
+  
+  if (req.headers.accept && req.headers.accept.includes('application/json')) {
+    // Return JSON if requested
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json(status);
+  } else {
+    // Return HTML status page
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yeti Tips API Status</title>
+  <title>Yeti Tips & Till - System Status</title>
   <style>
+    :root {
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.1);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59, 130, 246, 0.1);
+      --gray: #6b7280;
+      --gray-bg: rgba(107, 114, 128, 0.1);
+    }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       margin: 0;
       padding: 0;
-      color: #111827;
       background-color: #f9fafb;
+      color: #111827;
+      line-height: 1.5;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 2rem 1rem;
     }
     header {
       background-color: #2563eb;
@@ -58,17 +138,16 @@ export default function handler(req, res) {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
     }
-    h1, h2, h3 {
-      margin-top: 0;
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
     }
-    pre {
-      background-color: #1f2937;
-      color: #f9fafb;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      overflow-x: auto;
-      font-size: 0.875rem;
+    .logo {
+      font-weight: bold;
+      font-size: 1.8rem;
     }
     .card {
       background-color: white;
@@ -77,24 +156,63 @@ export default function handler(req, res) {
       padding: 1.5rem;
       margin-bottom: 1.5rem;
     }
-    .status {
+    .status-badge {
       display: inline-block;
       padding: 0.25rem 0.5rem;
       border-radius: 9999px;
       font-size: 0.875rem;
       font-weight: 500;
+      margin-left: 0.5rem;
     }
-    .status.online {
-      background-color: #d1fae5;
-      color: #065f46;
+    .status-badge.online {
+      background-color: var(--success-bg);
+      color: var(--success);
     }
-    .status.offline {
-      background-color: #fee2e2;
-      color: #b91c1c;
+    .status-badge.degraded {
+      background-color: var(--warning-bg);
+      color: var(--warning);
     }
-    .status.warning {
-      background-color: #fef3c7;
-      color: #92400e;
+    .status-badge.error {
+      background-color: var(--error-bg);
+      color: var(--error);
+    }
+    .status-badge.partial {
+      background-color: var(--warning-bg);
+      color: var(--warning);
+    }
+    .status-badge.connected {
+      background-color: var(--success-bg);
+      color: var(--success);
+    }
+    .status-badge.checking {
+      background-color: var(--blue-bg);
+      color: var(--blue);
+    }
+    .status-badge.unconfigured {
+      background-color: var(--gray-bg);
+      color: var(--gray);
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem 0;
+    }
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    .status-name {
+      font-weight: 500;
+      flex: 1;
+    }
+    .status-value {
+      text-align: right;
+      color: #6b7280;
+    }
+    .status-details {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
     }
     .button {
       display: inline-block;
@@ -104,75 +222,136 @@ export default function handler(req, res) {
       border-radius: 0.25rem;
       text-decoration: none;
       margin-right: 0.5rem;
+      font-weight: 500;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .button:hover {
+      background-color: #1d4ed8;
     }
-    th, td {
-      padding: 0.5rem;
-      text-align: left;
-      border-bottom: 1px solid #e5e7eb;
+    .button.secondary {
+      background-color: transparent;
+      border: 1px solid #d1d5db;
+      color: #374151;
     }
-    th {
-      font-weight: 600;
+    .button.secondary:hover {
+      background-color: #f3f4f6;
+    }
+    .maintenance-banner {
+      background-color: var(--warning-bg);
+      color: var(--warning);
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      font-weight: 500;
+    }
+    pre {
+      background-color: #f3f4f6;
+      padding: 0.75rem;
+      border-radius: 0.25rem;
+      overflow-x: auto;
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
   <header>
     <div class="container">
-      <h1>Yeti Tips API Status</h1>
-      <span class="status online">API Online</span>
+      <div class="logo">Yeti Tips & Till</div>
+      <div>
+        <a href="/" class="button">Home</a>
+        <a href="/api" class="button secondary">API</a>
+      </div>
     </div>
   </header>
   
   <div class="container">
-    <div class="card">
-      <h2>API Health Check</h2>
-      <table>
-        <tr>
-          <th>Service</th>
-          <th>Status</th>
-          <th>Details</th>
-        </tr>
-        <tr>
-          <td>API Endpoint</td>
-          <td><span class="status online">Online</span></td>
-          <td>Responding to requests</td>
-        </tr>
-        <tr>
-          <td>Database</td>
-          <td><span class="status ${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'warning' : 'warning') : 'offline'}">${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'Neon PostgreSQL' : 'PostgreSQL') : 'Not Configured'}</span></td>
-          <td>${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'Neon serverless adapter enabled' : 'Connection string detected') : 'No database URL configured'} <a href="/api/neon-test" class="button" style="padding: 0.1rem 0.5rem; font-size: 0.75rem;">Test Connection</a></td>
-        </tr>
-        <tr>
-          <td>DB Optimization</td>
-          <td><span class="status ${process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? 'online' : 'offline'}">${process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? 'Enabled' : 'Not Available'}</span></td>
-          <td>${process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? '@neondatabase/serverless package ready for optimized connections' : 'Only available with Neon PostgreSQL'}</td>
-        </tr>
-        <tr>
-          <td>Environment</td>
-          <td><span class="status online">Active</span></td>
-          <td>${process.env.NODE_ENV || 'development'}</td>
-        </tr>
-      </table>
+    ${status.app.maintenance ? `
+    <div class="maintenance-banner">
+      The system is currently in maintenance mode. Some features may be unavailable.
     </div>
-
+    ` : ''}
+    
     <div class="card">
-      <h2>System Information</h2>
-      <pre>${JSON.stringify(envReport, null, 2)}</pre>
+      <h2>System Status <span class="status-badge ${status.app.status}">${status.app.status}</span></h2>
+      <p>Status as of ${new Date().toLocaleString()}</p>
+      
+      <div class="status-item">
+        <div class="status-name">API</div>
+        <div class="status-value">
+          <span class="status-badge ${status.api.status === 'online' ? 'online' : 'error'}">${status.api.status}</span>
+        </div>
+      </div>
+      
+      <div class="status-item">
+        <div class="status-name">Database</div>
+        <div class="status-value">
+          <span class="status-badge ${status.database.status}">${status.database.status}</span>
+        </div>
+      </div>
+      <div class="status-details">
+        ${status.database.error ? `Error: ${status.database.error}` : ''}
+        ${status.database.version ? `Version: ${status.database.version}` : ''}
+      </div>
+      
+      <div class="status-item">
+        <div class="status-name">Frontend Build</div>
+        <div class="status-value">
+          <span class="status-badge ${status.build.status === 'available' ? 'online' : status.build.status === 'checking' ? 'checking' : 'error'}">${status.build.status}</span>
+        </div>
+      </div>
+      <div class="status-details">
+        ${status.build.error ? `Error: ${status.build.error}` : ''}
+      </div>
     </div>
-
+    
     <div class="card">
-      <h2>Quick Links</h2>
-      <p>
-        <a href="/" class="button">Home Page</a>
-        <a href="/api" class="button">API Root</a>
-        <a href="/api/hello" class="button">Hello API</a>
-        <a href="/api/neon-test" class="button">Test Neon DB</a>
-        <a href="/api/db-config" class="button">DB Config</a>
-      </p>
+      <h2>API Endpoints</h2>
+      <p>The following API endpoints are available for testing:</p>
+      
+      <div class="status-item">
+        <div class="status-name">/api/hello</div>
+        <div class="status-value">
+          <a href="/api/hello" class="button secondary">Test</a>
+        </div>
+      </div>
+      
+      <div class="status-item">
+        <div class="status-name">/api/neon-test</div>
+        <div class="status-value">
+          <a href="/api/neon-test" class="button secondary">Test</a>
+        </div>
+      </div>
+      
+      <div class="status-item">
+        <div class="status-name">/api/db-config</div>
+        <div class="status-value">
+          <a href="/api/db-config" class="button secondary">Test</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>Environment</h2>
+      <div class="status-item">
+        <div class="status-name">Application Environment</div>
+        <div class="status-value">${status.app.environment}</div>
+      </div>
+      
+      <div class="status-item">
+        <div class="status-name">Version</div>
+        <div class="status-value">${status.app.version}</div>
+      </div>
+      
+      <div class="status-item">
+        <div class="status-name">Timestamp</div>
+        <div class="status-value">${status.app.timestamp}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>JSON Response</h2>
+      <p>You can also get this status as JSON by adding the <code>Accept: application/json</code> header:</p>
+      <pre>${JSON.stringify(status, null, 2)}</pre>
     </div>
   </div>
 </body>
@@ -180,8 +359,5 @@ export default function handler(req, res) {
 
     res.setHeader('Content-Type', 'text/html');
     res.status(200).send(html);
-  } catch (error) {
-    // Handle any unexpected errors
-    res.status(500).send(`Error: ${error.message}`);
   }
 }

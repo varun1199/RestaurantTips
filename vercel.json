@@ -1,8 +1,11 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
   "builds": [
-    { "src": "vercel-build.js", "use": "@vercel/node" },
-    { "src": "api/*.js", "use": "@vercel/node" }
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "package.json", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "/api/hello", "dest": "/api/hello.js" },
@@ -10,9 +13,10 @@
     { "src": "/api/neon-test", "dest": "/api/neon-test.js" },
     { "src": "/api", "dest": "/api/index.js" },
     { "src": "/status", "dest": "/api/status.js" },
-    { "src": "/(.*)", "dest": "/api/serve.js" }
+    { "src": "/(.*)", "dest": "/api/fallback.js" }
   ],
   "env": {
-    "MAINTENANCE_MODE": "false"
+    "MAINTENANCE_MODE": "false",
+    "NODE_VERSION": "18.x"
   }
 }

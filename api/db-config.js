@@ -1,50 +1,48 @@
-// Database configuration endpoint
-// This file exposes configuration details (without credentials) for the database
-
-export default async function handler(req, res) {
+// API endpoint to verify database configuration (without exposing secrets)
+export default function handler(req, res) {
+  // Get DATABASE_URL from environment variables
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  // Check if DATABASE_URL is defined
+  if (!databaseUrl) {
+    return res.status(500).json({
+      success: false,
+      error: 'DATABASE_URL environment variable is not defined',
+      instructions: 'Please set the DATABASE_URL environment variable in Vercel project settings'
+    });
+  }
+  
   try {
-    // Check for database configuration
-    const hasDatabase = Boolean(process.env.DATABASE_URL);
-    const isNeonDb = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech');
+    // Parse the connection string without exposing credentials
+    // Format: postgresql://username:password@hostname:port/database
+    const cleanUrl = databaseUrl.replace(/(postgresql:\/\/)([^:]+)(:[^@]+)(@.*)/, '$1***:***$4');
     
-    // Prepare our response
-    const dbResponse = {
-      status: hasDatabase ? 'configured' : 'not_configured',
-      provider: isNeonDb ? 'Neon PostgreSQL' : (hasDatabase ? 'PostgreSQL' : 'none'),
-      timestamp: new Date().toISOString(),
-      maintenance_mode: process.env.MAINTENANCE_MODE === 'true',
-      environment: process.env.NODE_ENV || 'development',
-      connection_pool: false, // Will be updated in future iterations
-      test_endpoint: '/api/neon-test',
-      tips: [
-        'For Neon, ensure DATABASE_URL includes your project details',
-        'The connection string should start with postgres://',
-        'For performance, enable connection pooling in your Neon dashboard',
-        'Set SESSION_SECRET for secure cookie handling'
-      ]
-    };
+    // Extract host information
+    const urlObj = new URL(databaseUrl);
+    const host = urlObj.hostname;
+    const port = urlObj.port || '5432';
+    const database = urlObj.pathname.replace('/', '');
     
-    // Add hints about expected format without revealing actual connection string
-    if (hasDatabase) {
-      const url = new URL(process.env.DATABASE_URL);
-      dbResponse.connection_info = {
-        host_type: isNeonDb ? 'neon.tech' : url.hostname,
-        has_password: Boolean(url.password),
-        has_username: Boolean(url.username),
-        has_port: Boolean(url.port),
-        ssl_mode: process.env.DATABASE_URL.includes('sslmode=') 
-          ? process.env.DATABASE_URL.match(/sslmode=([^&]*)/)?.[1] || 'unknown' 
-          : 'not specified'
-      };
-    }
-    
-    res.status(200).json(dbResponse);
+    // Return configuration information without exposing credentials
+    return res.status(200).json({
+      success: true,
+      config: {
+        connectionUrl: cleanUrl,
+        host: host,
+        port: port,
+        database: database,
+        ssl: databaseUrl.includes('sslmode=require') ? true : 'default',
+        driver: 'postgresql',
+        provider: host.includes('neon.tech') ? 'Neon' : 'PostgreSQL'
+      },
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error('Database config error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error retrieving database configuration',
-      error: error.message,
+    // Return error response
+    return res.status(500).json({
+      success: false,
+      error: 'Invalid database connection string format',
+      detail: error.message,
       timestamp: new Date().toISOString()
     });
   }
