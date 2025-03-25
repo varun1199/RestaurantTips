@@ -9,14 +9,4 @@ GITHUB_UPLOAD_GUIDE.md
 VERCEL_DEPLOYMENT_GUIDE.md
 .replit
 replit.nix
-client
-server
-shared
-public
-yeti_tips_mobile
 *.log
-drizzle.config.ts
-tailwind.config.ts
-postcss.config.js
-tsconfig.json
-theme.json
