@@ -1,0 +1,47 @@
+{
+  "version": 3,
+  "routes": [
+    { "src": "/api/health", "dest": "/api/health" },
+    { "src": "/api/hello", "dest": "/api/hello" },
+    { "src": "/api/db-config", "dest": "/api/db-config" },
+    { "src": "/api/neon-test", "dest": "/api/neon-test" },
+    { "src": "/api", "dest": "/api/index" },
+    { "src": "/status", "dest": "/api/status" },
+    { "src": "/fallback", "dest": "/api/fallback" },
+    { "src": "/(.*)", "dest": "/api/serve" }
+  ],
+  "overrides": {
+    "api/health.js": {
+      "path": "api/health.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/hello.js": {
+      "path": "api/hello.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/db-config.js": {
+      "path": "api/db-config.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/neon-test.js": {
+      "path": "api/neon-test.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/index.js": {
+      "path": "api/index.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/status.js": {
+      "path": "api/status.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/fallback.js": {
+      "path": "api/fallback.js",
+      "contentType": "application/javascript; charset=utf-8"
+    },
+    "api/serve.js": {
+      "path": "api/serve.js",
+      "contentType": "application/javascript; charset=utf-8"
+    }
+  }
+}

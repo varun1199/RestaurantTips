@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yeti Tips & Till</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f9fafb;
+      --text: #111827;
+      --border: #e5e7eb;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 2rem;
+    }
+    header .container {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+    .card {
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .info {
+      background-color: #f0f7ff;
+      border-left: 4px solid var(--primary);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 0.25rem;
+    }
+    .button {
+      display: inline-block;
+      background-color: var(--primary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .button.secondary {
+      background-color: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .endpoints {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .endpoint-card {
+      background-color: #f9fafb;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--border);
+    }
+    .endpoint-path {
+      font-family: monospace;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="logo">Yeti Tips & Till</div>
+    </div>
+  </header>
+  
+  <div class="container">
+    <div class="info">
+      <p>The application is currently loading. If you continue to see this page, please try one of the API endpoints below to check system status.</p>
+    </div>
+    
+    <div class="card">
+      <h2>System Information</h2>
+      <p>The Yeti Tips & Till application is a comprehensive restaurant tip management and financial operations system. The main application interface is currently deploying.</p>
+      
+      <p>While you wait, you can check the system status using the links below:</p>
+      
+      <div class="endpoints">
+        <div class="endpoint-card">
+          <div class="endpoint-path">/status</div>
+          <a href="/status" class="button secondary">Check Status</a>
+        </div>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-path">/api</div>
+          <a href="/api" class="button secondary">API Docs</a>
+        </div>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-path">/api/health</div>
+          <a href="/api/health" class="button secondary">Health Check</a>
+        </div>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-path">/api/hello</div>
+          <a href="/api/hello" class="button secondary">Hello API</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>Troubleshooting</h2>
+      <p>If you're seeing this page, it may be because:</p>
+      <ul>
+        <li>The application is still deploying (please wait a few minutes)</li>
+        <li>There was an issue with the build process</li>
+        <li>The Vercel environment is not configured correctly</li>
+      </ul>
+      
+      <p>Try the <a href="/fallback">fallback landing page</a> or <a href="/api/neon-test">test database connection</a> for more information.</p>
+    </div>
+  </div>
+  
+  <footer>
+    <div class="container">
+      <p style="text-align: center; color: #6b7280;">Yeti Tips & Till © 2025</p>
+    </div>
+  </footer>
+</body>
+</html>

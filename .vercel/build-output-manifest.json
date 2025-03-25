@@ -1,0 +1,34 @@
+{
+  "version": 3,
+  "target": "preview",
+  "buildCommand": "node vercel-build.js",
+  "outputDirectory": "dist",
+  "routes": [
+    { "src": "/api/health", "dest": "/api/health.js" },
+    { "src": "/api/hello", "dest": "/api/hello.js" },
+    { "src": "/api/db-config", "dest": "/api/db-config.js" },
+    { "src": "/api/neon-test", "dest": "/api/neon-test.js" },
+    { "src": "/api", "dest": "/api/index.js" },
+    { "src": "/status", "dest": "/api/status.js" },
+    { "src": "/fallback", "dest": "/api/fallback.js" },
+    { "src": "/(.*)", "dest": "/api/serve.js" }
+  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "environment": {
+    "NODE_ENV": "production",
+    "MAINTENANCE_MODE": "false"
+  },
+  "images": {
+    "sizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    "domains": [],
+    "remotePatterns": [],
+    "formats": ["image/webp"],
+    "minimumCacheTTL": 60,
+    "dangerouslyAllowSVG": true
+  }
+}

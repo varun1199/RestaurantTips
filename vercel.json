@@ -4,6 +4,7 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "public": true,
+  "framework": null,
   "functions": {
     "api/*.js": {
       "memory": 1024,
@@ -11,17 +12,61 @@
     }
   },
   "routes": [
-    { "src": "/api/health", "dest": "/api/health.js" },
-    { "src": "/api/hello", "dest": "/api/hello.js" },
-    { "src": "/api/db-config", "dest": "/api/db-config.js" },
-    { "src": "/api/neon-test", "dest": "/api/neon-test.js" },
+    { "handle": "filesystem" },
+    { "src": "/api/health", "dest": "/api/health.js", "methods": ["GET"] },
+    { "src": "/api/hello", "dest": "/api/hello.js", "methods": ["GET"] },
+    { "src": "/api/db-config", "dest": "/api/db-config.js", "methods": ["GET"] },
+    { "src": "/api/neon-test", "dest": "/api/neon-test.js", "methods": ["GET"] },
     { "src": "/api", "dest": "/api/index.js" },
     { "src": "/status", "dest": "/api/status.js" },
     { "src": "/fallback", "dest": "/api/fallback.js" },
     { "src": "/(.*)", "dest": "/api/serve.js" }
   ],
+  "regions": ["iad1"],
   "env": {
     "MAINTENANCE_MODE": "false",
     "NODE_ENV": "production"
-  }
+  },
+  "build": {
+    "env": {
+      "MAINTENANCE_MODE": "false",
+      "NODE_ENV": "production"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept"
+        }
+      ]
+    }
+  ]
 }
