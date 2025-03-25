@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertTipSchema, insertTillSchema, insertUserSchema, registrationSchema } from "@shared/schema";
 import session from "express-session";
 import { nanoid } from "nanoid";
+import apiTestRoutes from "./apiTest";
 
 declare module "express-session" {
   interface SessionData {
@@ -21,6 +22,9 @@ export async function registerRoutes(app: Express) {
       cookie: { secure: process.env.NODE_ENV === "production" }
     })
   );
+  
+  // Register API test routes
+  app.use('/api-test', apiTestRoutes);
 
   // Auth middleware
   const requireAuth = (req: Request, res: Response, next: Function) => {

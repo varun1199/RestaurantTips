@@ -79,7 +79,10 @@ router.get('/neon-test', async (req, res) => {
       version: result.rows[0].version,
       timestamp: new Date().toISOString()
     });
-  } catch (error) {
+  } catch (err) {
+    // Cast the unknown error to an object with message and stack properties
+    const error = err as { message: string, stack?: string };
+    
     // Return error response
     return res.status(500).json({
       success: false,
