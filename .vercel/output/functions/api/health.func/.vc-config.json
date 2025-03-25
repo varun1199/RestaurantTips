@@ -1,0 +1,10 @@
+{
+  "runtime": "edge",
+  "entrypoint": "health.js",
+  "envVarsInUse": [
+    "NODE_ENV",
+    "VERCEL_ENV",
+    "DATABASE_URL",
+    "MAINTENANCE_MODE"
+  ]
+}

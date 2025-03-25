@@ -15,7 +15,6 @@
       "NODE_ENV": "production"
     }
   },
-  "trailingSlash": false,
   "rewrites": [
     { "source": "/status", "destination": "/api/status" },
     { "source": "/fallback", "destination": "/api/fallback" }
@@ -37,5 +36,12 @@
         { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Accept" }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "cleanUrls": true
 }

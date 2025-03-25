@@ -7,6 +7,10 @@ export default function handler(req, res) {
   // Check for the database URL (don't expose the actual string)
   const hasDbUrl = !!process.env.DATABASE_URL;
   
+  // Set proper headers for Vercel Edge Functions
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  
   // Return health check info
   res.status(200).json({
     status: 'ok',
