@@ -3,10 +3,13 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "package.json", "use": "@vercel/node" }
-  ],
+  "functions": {
+    "api/*.js": {
+      "memory": 512,
+      "maxDuration": 10,
+      "runtime": "nodejs18.x"
+    }
+  },
   "routes": [
     { "src": "/api/health", "dest": "/api/health.js" },
     { "src": "/api/hello", "dest": "/api/hello.js" },
@@ -18,15 +21,8 @@
     { "src": "/fallback", "dest": "/api/fallback.js" },
     { "src": "/(.*)", "dest": "/api/serve.js" }
   ],
-  "functions": {
-    "api/*.js": {
-      "memory": 512,
-      "maxDuration": 10
-    }
-  },
   "env": {
     "MAINTENANCE_MODE": "false",
-    "NODE_ENV": "production",
-    "NODE_VERSION": "18.x"
+    "NODE_ENV": "production"
   }
 }
