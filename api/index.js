@@ -1,5 +1,8 @@
 // API documentation endpoint
 export default function handler(req, res) {
+  // Set common headers for both responses
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  
   // If client accepts HTML, send HTML documentation
   if (req.headers.accept && req.headers.accept.includes('text/html')) {
     const html = `<!DOCTYPE html>

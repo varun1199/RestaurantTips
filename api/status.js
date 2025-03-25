@@ -90,6 +90,9 @@ export default async function handler(req, res) {
     status.app.status = 'partial';
   }
   
+  // Set common headers for both responses
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  
   if (req.headers.accept && req.headers.accept.includes('application/json')) {
     // Return JSON if requested
     res.setHeader('Content-Type', 'application/json');

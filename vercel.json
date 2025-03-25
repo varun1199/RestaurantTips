@@ -17,7 +17,10 @@
   },
   "rewrites": [
     { "source": "/status", "destination": "/api/status" },
-    { "source": "/fallback", "destination": "/api/fallback" }
+    { "source": "/fallback", "destination": "/api/fallback" },
+    { "source": "/api", "destination": "/api/index" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -33,7 +36,8 @@
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Accept" }
+        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Accept" },
+        { "key": "Cache-Control", "value": "no-store, max-age=0" }
       ]
     }
   ],
