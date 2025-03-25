@@ -230,6 +230,53 @@ export default function handler(req, res) {
       <a href="/status" class="button secondary" target="_blank">Try it</a>
     </div>
     
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/status</span>
+      </div>
+      <div class="description">
+        <p>Alternative endpoint for detailed system status (same as /status).</p>
+      </div>
+      
+      <h3>Example Response</h3>
+      <pre><code>{
+  "application": {
+    "name": "Yeti Tips & Till",
+    "version": "1.0.0",
+    "status": "healthy", 
+    "environment": "production",
+    "vercelEnvironment": "production",
+    "maintenanceMode": false,
+    "timestamp": "2025-03-06T14:26:55.733Z",
+    "responseTime": "128ms"
+  },
+  "database": {
+    "type": "PostgreSQL (Neon)",
+    "configured": true,
+    "connected": true,
+    "version": "PostgreSQL 15.3 on x86_64-pc-linux-gnu...",
+    "error": null
+  },
+  "system": {
+    "platform": "linux",
+    "nodeVersion": "v20.18.1",
+    "uptime": 3600,
+    "memory": { "total": 4096, "free": 2048 },
+    "cpus": 2
+  },
+  "endpoints": [
+    { "path": "/api/hello", "method": "GET", "status": "available" },
+    { "path": "/api/health", "method": "GET", "status": "available" },
+    { "path": "/api/db-config", "method": "GET", "status": "available" },
+    { "path": "/api/neon-test", "method": "GET", "status": "available" },
+    { "path": "/api/status", "method": "GET", "status": "available" }
+  ]
+}</code></pre>
+
+      <a href="/api/status" class="button secondary" target="_blank">Try it</a>
+    </div>
+    
     <h2>Database</h2>
     
     <div class="endpoint">
@@ -330,6 +377,11 @@ export default function handler(req, res) {
           path: '/status',
           method: 'GET',
           description: 'Get detailed system status including API, database, and frontend build status'
+        },
+        {
+          path: '/api/status',
+          method: 'GET',
+          description: 'Alternative endpoint for detailed system status (same as /status)'
         },
         {
           path: '/api/db-config',

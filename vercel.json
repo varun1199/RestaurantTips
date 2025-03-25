@@ -17,8 +17,9 @@
     { "src": "/api/hello", "dest": "/api/hello.js", "methods": ["GET"] },
     { "src": "/api/db-config", "dest": "/api/db-config.js", "methods": ["GET"] },
     { "src": "/api/neon-test", "dest": "/api/neon-test.js", "methods": ["GET"] },
+    { "src": "/api/status", "dest": "/api/status.js", "methods": ["GET"] },
     { "src": "/api", "dest": "/api/index.js" },
-    { "src": "/status", "dest": "/api/status.js" },
+    { "src": "/status", "dest": "/api/status.js", "methods": ["GET"] },
     { "src": "/fallback", "dest": "/api/fallback.js" },
     { "src": "/(.*)", "dest": "/api/serve.js" }
   ],
