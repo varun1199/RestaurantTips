@@ -29,11 +29,21 @@ When configuring your project in Vercel, use these settings:
 
 ### 3. Environment Variables
 
-Add the following environment variables:
+Add the following environment variables in your Vercel project settings:
 
-- `DATABASE_URL`: Your PostgreSQL database URL (required)
+- `DATABASE_URL`: Your Neon PostgreSQL connection string (required)
+  - Format: `postgres://user:password@endpoint/database?sslmode=require`
+  - Get this from your Neon dashboard
+  - Example: `postgres://myuser:pass@ep-cool-grass-123456.us-east-2.aws.neon.tech/neondb?sslmode=require`
+
 - `SESSION_SECRET`: A secure random string for session encryption
-- `NODE_ENV`: Set to `production`
+  - Generate with `openssl rand -base64 32` or a similar method
+  - Must be at least 32 characters long for security
+
+- `NODE_ENV`: Set to `production` for optimized performance
+
+- `MAINTENANCE_MODE`: Set to `false` to enable full application features
+  - Use `true` during initial setup or maintenance periods
 
 ### 4. Deploy the Project
 
@@ -116,15 +126,24 @@ If you see a "This Serverless Function Has Crashed" error:
    - Added `/api/hello` health check endpoint
    - All these endpoints should be operational
    
-   **Step 3: Database Configuration (NEXT)**
-   - Add the DATABASE_URL environment variable in Vercel:
+   **Step 3: Database Configuration with Neon PostgreSQL (NEXT)**
+   - Create a Neon PostgreSQL database:
+     1. Sign up at [neon.tech](https://neon.tech) if you haven't already
+     2. Create a new project
+     3. Note your connection string which will look like:
+        `postgres://user:password@ep-xyz-123456.region.aws.neon.tech/neondb?sslmode=require`
+     4. Enable connection pooling for better performance
+   - Add environment variables in Vercel:
      1. Go to your Vercel project dashboard
      2. Navigate to Settings > Environment Variables
-     3. Add `DATABASE_URL` with your PostgreSQL connection string
-     4. Set `SESSION_SECRET` with a strong random string
+     3. Add `DATABASE_URL` with your Neon connection string
+     4. Set `SESSION_SECRET` with a strong random string (use `openssl rand -base64 32`)
      5. Set `MAINTENANCE_MODE=false` to enable transitional features
    - Deploy after adding these environment variables
-   - Test `/api/db-config` to verify your database is recognized
+   - Test database connection:
+     1. Visit `/api/neon-test` to verify Neon connection
+     2. Check `/api/db-config` for configuration details
+     3. If successful, these endpoints will confirm your database is recognized
    
    **Step 4: Transitional API Mode**
    - The `/api/adapter.js` provides a bridge to the full application
@@ -165,7 +184,14 @@ If you see a "This Serverless Function Has Crashed" error:
 #### Database Connection Issues
 
 - Verify your `DATABASE_URL` is correctly set in environment variables
+- For Neon PostgreSQL:
+  1. Get your connection string from the Neon dashboard
+  2. Use the format: `postgres://user:password@endpoint/database?sslmode=require`
+  3. Ensure you're using the correct endpoint URL (should contain `neon.tech`)
+  4. Enable connection pooling in the Neon dashboard for better performance
+  5. Test database connectivity with the `/api/neon-test` endpoint
 - Make sure your database allows connections from Vercel's IP addresses
+- For security reasons, create a dedicated role in Neon with limited permissions for the application
 
 #### Seeing Source Code Instead of Running App
 
@@ -204,3 +230,31 @@ After successful deployment:
 ## Keeping Deployments Updated
 
 Any new commits pushed to the main branch of your connected GitHub repository will automatically trigger a new deployment.
+
+## Optimizing Neon PostgreSQL for Serverless
+
+Neon PostgreSQL works especially well with serverless functions on Vercel, but requires some optimization:
+
+### Connection Pooling
+
+For serverless environments, connection pooling is essential:
+
+1. In your Neon dashboard, navigate to your project
+2. Go to the "Connection Pooling" section
+3. Enable connection pooling
+4. Use the pooled connection string in your `DATABASE_URL` environment variable
+
+### @neondatabase/serverless
+
+For best performance with Neon:
+
+1. Our project already includes the `@neondatabase/serverless` package
+2. This package optimizes connection handling specifically for serverless environments
+3. It reduces cold start times and manages connections efficiently
+
+### Security Best Practices
+
+1. Create a dedicated database role for your application with minimal permissions
+2. Use parameterized queries to prevent SQL injection
+3. Never expose your database credentials in client-side code
+4. Consider separate read-only and read-write connection strings for different operations

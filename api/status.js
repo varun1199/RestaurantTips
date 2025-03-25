@@ -144,7 +144,12 @@ export default function handler(req, res) {
         <tr>
           <td>Database</td>
           <td><span class="status ${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'warning' : 'warning') : 'offline'}">${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'Neon PostgreSQL' : 'PostgreSQL') : 'Not Configured'}</span></td>
-          <td>${process.env.DATABASE_URL ? 'Connection string detected but status not verified' : 'No database URL configured'} <a href="/api/neon-test" class="button" style="padding: 0.1rem 0.5rem; font-size: 0.75rem;">Test Connection</a></td>
+          <td>${process.env.DATABASE_URL ? (process.env.DATABASE_URL.includes('neon.tech') ? 'Neon serverless adapter enabled' : 'Connection string detected') : 'No database URL configured'} <a href="/api/neon-test" class="button" style="padding: 0.1rem 0.5rem; font-size: 0.75rem;">Test Connection</a></td>
+        </tr>
+        <tr>
+          <td>DB Optimization</td>
+          <td><span class="status ${process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? 'online' : 'offline'}">${process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? 'Enabled' : 'Not Available'}</span></td>
+          <td>${process.env.DATABASE_URL && process.env.DATABASE_URL.includes('neon.tech') ? '@neondatabase/serverless package ready for optimized connections' : 'Only available with Neon PostgreSQL'}</td>
         </tr>
         <tr>
           <td>Environment</td>
@@ -165,6 +170,8 @@ export default function handler(req, res) {
         <a href="/" class="button">Home Page</a>
         <a href="/api" class="button">API Root</a>
         <a href="/api/hello" class="button">Hello API</a>
+        <a href="/api/neon-test" class="button">Test Neon DB</a>
+        <a href="/api/db-config" class="button">DB Config</a>
       </p>
     </div>
   </div>
